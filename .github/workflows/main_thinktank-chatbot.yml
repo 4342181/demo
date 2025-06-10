@@ -31,6 +31,24 @@ jobs:
       
       - name: Install dependencies
         run: pip install -r requirements.txt
+
+         # Setup Node.js for frontend build
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/frontend/package-lock.json
+    
+      - name: Install frontend dependencies
+        run: |
+          cd frontend/frontend
+          npm install
+    
+      - name: Build frontend
+        run: |
+          cd frontend/frontend
+          npm run build
         
       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
 
