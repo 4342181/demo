@@ -38,16 +38,16 @@ jobs:
         with:
           node-version: '18'
           cache: 'npm'
-          cache-dependency-path: frontend/frontend/package-lock.json
+          cache-dependency-path: Frontend/package-lock.json
     
       - name: Install frontend dependencies
         run: |
-          cd frontend/frontend
+          cd Frontend
           npm install
     
       - name: Build frontend
         run: |
-          cd frontend/frontend
+          cd Frontend
           npm run build
         
       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
