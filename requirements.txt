@@ -37,3 +37,4 @@ openai==1.86.0
 azure-ai-documentintelligence
 azure-identity
 azure-storage-blob
+tiktoken
