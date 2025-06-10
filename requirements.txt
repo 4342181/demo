@@ -38,3 +38,5 @@ azure-ai-documentintelligence
 azure-identity
 azure-storage-blob
 tiktoken
+numpy
+pickle
