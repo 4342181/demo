@@ -1,0 +1,33 @@
+{
+  "project": { "name": "Cognito AI", "purpose": "RAG chatbot for RFP/RFQ document analysis" },
+  "files": {
+    "F1": { "path": "app.py", "role": "FastAPI server — auth, /analyze, SPA fallback", "routes": [
+      { "method": "GET",  "path": "/" },
+      { "method": "POST", "path": "/register-dummy-user", "params": ["username:Form","password:Form"] },
+      { "method": "POST", "path": "/login",               "params": ["username:Form","password:Form"], "returns": "access_token" },
+      { "method": "POST", "path": "/analyze",             "params": ["file:UploadFile","query:Form"],  "returns": "response:str", "auth": false },
+      { "method": "GET",  "path": "/{full_path}",         "desc": "SPA fallback" }
+    ]},
+    "F2": { "path": "pipeline.py", "role": "RAG engine", "functions": {
+      "get_embedding":              { "params": ["text:str"],                    "returns": "np.ndarray" },
+      "chunk_text":                 { "params": ["text:str","source:str"],       "returns": "list[{text_content,source_doc_name}]", "strategy": "500-token windows, 50-token overlap" },
+      "extract_general_document_data": { "params": ["analyze_result"],           "returns": "{content:str}" },
+      "process_uploaded_file":      { "params": ["file_bytes:bytes"],            "returns": "list[{text,embedding,source}]" },
+      "run_rag_query":              { "params": ["kb:list","query:str"],         "returns": "str", "temp": 0.2, "max_tokens": 1000 },
+      "load_base_kb":               { "params": [],                              "returns": "list[{text,embedding,source}]" }
+    }},
+    "F3": { "path": "main.py",              "role": "CLI — one-shot KB builder + interactive chat. Not called by app.py." },
+    "F4": { "path": "knowledge_base.pkl",   "role": "Persisted vector store. pickle list of {text,embedding,source}. Created by F3, loaded by F2." },
+    "F5": { "path": "Frontend/src/App.js",  "role": "Entire React app", "components": ["Login","ChatAppContent","App","AppWithRouter"] },
+    "F6": { "path": "Frontend/src/index.js","role": "React entry — renders AppWithRouter" },
+    "F7": { "path": "Frontend/package.json","role": "Frontend deps" },
+    "F8": { "path": "requirements.txt",     "role": "Backend deps" }
+  },
+  "critical_notes": [
+    "/analyze has NO token validation — publicly accessible",
+    "access_token is a placeholder string, not a real JWT",
+    "Frontend hardcodes http://localhost:8000",
+    "main.py is a one-shot CLI tool, not part of the server",
+    "base_kb loaded once at startup; temp_kb per-request, never persisted"
+  ]
+}
