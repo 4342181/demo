@@ -119,7 +119,10 @@ curl -X POST http://localhost:8000/payments/initiate \
   -d '{"account_id": 1, "amount": 200, "return_url": "https://example.org/return"}'
 ```
 
-This returns a `redirect_url` to PayGate's hosted payment page. PayGate
+This returns `process_url`, `pay_request_id`, and `checksum`. The client
+POSTs those last two to `process_url` (PayGate's `process.trans`) as a
+form — a GET redirect is rejected with `DATA_PAY_REQ_ID` — to reach the
+hosted payment page. PayGate
 then calls our `/payments/notify` webhook server-to-server once the
 resident pays — that webhook, not the browser redirect, is the only
 thing that updates the account balance, and it's checksum-verified and

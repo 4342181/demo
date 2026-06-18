@@ -104,10 +104,14 @@ async def initiate_payment(
     if checksum != expected:
         raise ValueError("PayGate initiate response failed checksum verification")
 
+    # process.trans must be reached by an HTTP POST of PAY_REQUEST_ID +
+    # CHECKSUM as form fields — a GET query string is rejected with
+    # DATA_PAY_REQ_ID. The client builds and submits that form; we hand
+    # back the pieces it needs.
     return {
         "pay_request_id": pay_request_id,
         "checksum": checksum,
-        "redirect_url": f"{PAYGATE_PROCESS_URL}?PAY_REQUEST_ID={pay_request_id}&CHECKSUM={checksum}",
+        "process_url": PAYGATE_PROCESS_URL,
     }
 
 

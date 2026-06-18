@@ -107,13 +107,16 @@ async function handleInput(text) {
     // resident pays in their browser, and PayGate's webhook confirms the
     // payment server-to-server — the bot finds out by polling status (or
     // would itself receive a webhook in a real BSP integration).
+    const returnUrl = window.location.href.startsWith('http')
+      ? window.location.href
+      : `${API_BASE}/docs`;
     const res = await fetch(`${API_BASE}/payments/initiate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         account_id: session.account.id,
         amount,
-        return_url: window.location.href,
+        return_url: returnUrl,
       }),
     });
     if (!res.ok) {
@@ -125,7 +128,11 @@ async function handleInput(text) {
     const result = await res.json();
     session.pendingPaymentId = result.pending_payment_id;
     session.stage = 'await_payment_confirmation';
-    botSay(`Tap to pay: ${result.redirect_url}\n\nOnce you've paid, reply "done" and I'll check.`);
+    // process.trans needs an HTTP POST, so open the payment in a new tab
+    // via an auto-submitting form (a real WhatsApp bot would instead send
+    // a hosted payment link). The chat stays put so we can poll status.
+    openPayGateInNewTab(result.process_url, result.pay_request_id, result.checksum);
+    botSay(`Opening the payment page in a new tab...\n\nOnce you've paid, reply "done" and I'll check.`);
     setQuickReplies(['done']);
     return;
   }
@@ -174,6 +181,22 @@ async function handleInput(text) {
     setQuickReplies(['balance', 'pay', 'report fault']);
     return;
   }
+}
+
+function openPayGateInNewTab(processUrl, payRequestId, checksum) {
+  const win = window.open('', '_blank');
+  const form = win.document.createElement('form');
+  form.method = 'POST';
+  form.action = processUrl;
+  for (const [name, value] of Object.entries({ PAY_REQUEST_ID: payRequestId, CHECKSUM: checksum })) {
+    const input = win.document.createElement('input');
+    input.type = 'hidden';
+    input.name = name;
+    input.value = value;
+    form.appendChild(input);
+  }
+  win.document.body.appendChild(form);
+  form.submit();
 }
 
 function handleFreeText() {
