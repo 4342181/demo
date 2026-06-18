@@ -19,7 +19,7 @@ common integration failure with this kind of API.
 
 Sandbox-only test credentials (PayGate's permanent published test
 merchant, safe to use for development without registering):
-  PAYGATE_ID = 10011072154
+  PAYGATE_ID = 10011072130
   ENCRYPTION_KEY = secret
 """
 import hashlib
@@ -28,7 +28,7 @@ import os
 
 import httpx
 
-PAYGATE_ID = os.environ.get("PAYGATE_ID", "10011072154")
+PAYGATE_ID = os.environ.get("PAYGATE_ID", "10011072130")
 ENCRYPTION_KEY = os.environ.get("PAYGATE_ENCRYPTION_KEY", "secret")
 
 PAYGATE_INITIATE_URL = "https://secure.paygate.co.za/payweb3/initiate.trans"
@@ -85,6 +85,11 @@ async def initiate_payment(
         response = await client.post(PAYGATE_INITIATE_URL, data=fields)
         response.raise_for_status()
 
+    # Logged so a checksum/field mismatch (PayGate's DATA_CHK) can be
+    # diagnosed from the request we sent vs. the raw response we got back.
+    print("[psp] initiate request fields:", fields)
+    print("[psp] initiate raw response:", response.text)
+
     parsed = dict(item.split("=", 1) for item in response.text.split("&") if "=" in item)
 
     if parsed.get("ERROR"):
@@ -93,14 +98,20 @@ async def initiate_payment(
     pay_request_id = parsed["PAY_REQUEST_ID"]
     checksum = parsed["CHECKSUM"]
 
-    expected = _checksum([PAYGATE_ID, pay_request_id])
+    # PayWeb3 initiate-response checksum is MD5 of
+    # PAYGATE_ID + PAY_REQUEST_ID + REFERENCE + encryption key.
+    expected = _checksum([PAYGATE_ID, pay_request_id, parsed.get("REFERENCE", reference)])
     if checksum != expected:
         raise ValueError("PayGate initiate response failed checksum verification")
 
+    # process.trans must be reached by an HTTP POST of PAY_REQUEST_ID +
+    # CHECKSUM as form fields — a GET query string is rejected with
+    # DATA_PAY_REQ_ID. The client builds and submits that form; we hand
+    # back the pieces it needs.
     return {
         "pay_request_id": pay_request_id,
         "checksum": checksum,
-        "redirect_url": f"{PAYGATE_PROCESS_URL}?PAY_REQUEST_ID={pay_request_id}&CHECKSUM={checksum}",
+        "process_url": PAYGATE_PROCESS_URL,
     }
 
 

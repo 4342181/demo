@@ -79,7 +79,8 @@
 </main>
 
 <script>
-const API_BASE = window.API_BASE || "http://localhost:8000";
+const API_BASE = new URLSearchParams(window.location.search).get('api') || window.API_BASE || "http://localhost:8000";
+const NGROK_HEADERS = { 'ngrok-skip-browser-warning': 'true' };
 let currentAccount = null;
 
 function showMsg(elId, text, kind) {
@@ -96,7 +97,7 @@ async function lookupAccount() {
   if (!accountNumber) { showMsg('lookup-msg', 'Enter an account number.', 'error'); return; }
 
   try {
-    const res = await fetch(`${API_BASE}/municipalities/${municipalityId}/accounts/lookup?account_number=${encodeURIComponent(accountNumber)}`);
+    const res = await fetch(`${API_BASE}/municipalities/${municipalityId}/accounts/lookup?account_number=${encodeURIComponent(accountNumber)}`, { headers: NGROK_HEADERS });
     if (!res.ok) throw new Error((await res.json()).detail || 'Account not found');
     currentAccount = await res.json();
     renderAccount();
@@ -116,7 +117,7 @@ function renderAccount() {
 }
 
 async function loadHistory() {
-  const res = await fetch(`${API_BASE}/accounts/${currentAccount.id}/history`);
+  const res = await fetch(`${API_BASE}/accounts/${currentAccount.id}/history`, { headers: NGROK_HEADERS });
   if (!res.ok) return;
   const data = await res.json();
   const tbody = document.querySelector('#history-table tbody');
@@ -137,22 +138,44 @@ async function payNow() {
   try {
     // Real flow: hand off to PayGate. The balance only updates once
     // PayGate's notify webhook confirms the payment server-to-server —
-    // this redirect is just where the resident's browser ends up.
+    // the form POST below is just where the resident's browser ends up.
+    // PayGate only lets you redirect back to an http(s) URL, so when this
+    // page is opened as a local file we fall back to the API's /docs page.
+    const returnUrl = window.location.href.startsWith('http')
+      ? window.location.href
+      : `${API_BASE}/docs`;
     const res = await fetch(`${API_BASE}/payments/initiate`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...NGROK_HEADERS },
       body: JSON.stringify({
         account_id: currentAccount.id,
         amount: parseFloat(amount),
-        return_url: window.location.href,
+        return_url: returnUrl,
       }),
     });
     if (!res.ok) throw new Error((await res.json()).detail || 'Could not start payment');
     const result = await res.json();
-    window.location.href = result.redirect_url;
+    // process.trans requires an HTTP POST of PAY_REQUEST_ID + CHECKSUM,
+    // so build and submit a form rather than navigating to a URL.
+    submitToPayGate(result.process_url, result.pay_request_id, result.checksum);
   } catch (err) {
     showMsg('account-action-msg', err.message, 'error');
   }
+}
+
+function submitToPayGate(processUrl, payRequestId, checksum) {
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = processUrl;
+  for (const [name, value] of Object.entries({ PAY_REQUEST_ID: payRequestId, CHECKSUM: checksum })) {
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = name;
+    input.value = value;
+    form.appendChild(input);
+  }
+  document.body.appendChild(form);
+  form.submit();
 }
 
 function showFaultForm() {
@@ -172,7 +195,7 @@ async function submitFault() {
   try {
     const res = await fetch(`${API_BASE}/tickets`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...NGROK_HEADERS },
       body: JSON.stringify({
         municipality_id: parseInt(document.getElementById('municipality-id').value),
         account_id: currentAccount ? currentAccount.id : null,

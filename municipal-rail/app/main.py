@@ -183,7 +183,12 @@ async def initiate_payment(payload: schemas.PaymentInitiate, request: Request, d
     db.add(pending)
     db.commit()
 
-    return {"pending_payment_id": pending.id, "redirect_url": result["redirect_url"]}
+    return {
+        "pending_payment_id": pending.id,
+        "process_url": result["process_url"],
+        "pay_request_id": result["pay_request_id"],
+        "checksum": result["checksum"],
+    }
 
 
 @app.post("/payments/notify")
