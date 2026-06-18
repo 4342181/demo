@@ -133,19 +133,52 @@ The dashboard and WhatsApp mockup (Sprint 3) both call
 - Defaults to PayGate's published test merchant
   (`PAYGATE_ID=10011072154`, key `secret`) — override with the
   `PAYGATE_ID` / `PAYGATE_ENCRYPTION_KEY` env vars for a real account.
-- PayGate's notify webhook needs a publicly reachable URL — for local
-  testing, tunnel `localhost:8000` with something like `ngrok` and pass
-  that URL through as `NOTIFY_URL` (currently derived from the
-  request's own base URL in `app/main.py`).
 - The checksum algorithm and ledger/idempotency logic
   (`app/psp.py`, `app/reconciliation.py`) are unit-tested in
   `tests/test_psp.py` (`pytest tests/`) and were also exercised
-  end-to-end by simulating a PayGate notify POST directly — but the
-  actual HTTP call to PayGate's initiate endpoint has not been verified
-  against a live sandbox session yet. Re-check the field list/order in
-  PayGate's current PayWeb3 integration guide before depending on this
-  in production; checksum mismatches are the most common failure mode
-  with this kind of API.
+  end-to-end by simulating a PayGate notify POST directly. The actual
+  HTTP round trip to PayGate's initiate endpoint has NOT been verified
+  against a live sandbox session — this couldn't be done from the
+  environment this was built in, which has no outbound internet access
+  beyond a small allowlist. Test it from a normal machine first (see
+  below) before relying on it.
+
+### Testing the real PayGate flow locally
+
+This needs to run somewhere with normal internet access (your laptop —
+not a network-locked CI/cloud sandbox), plus a tunnel so PayGate can
+reach your local webhook.
+
+1. **Start the API** as in Setup above (`uvicorn app.main:app --reload`).
+2. **Tunnel it** so PayGate's servers can call your notify webhook:
+   ```bash
+   npx ngrok http 8000
+   ```
+   Note the `https://xxxx.ngrok-free.app` URL it gives you.
+3. **Point `NOTIFY_URL` at the tunnel** instead of `localhost` — currently
+   `app/main.py` derives it from the request's own base URL, so the
+   easiest way is to open the dashboard via the tunnel too: visit
+   `https://xxxx.ngrok-free.app/docs` to confirm the tunnel reaches the
+   API, then open `dashboard/index.html` and set
+   `window.API_BASE = "https://xxxx.ngrok-free.app"` (edit the top of
+   the `<script>` block, or set it from the browser console) before
+   clicking "Pay now".
+4. **Onboard a municipality and ingest the sample data** (steps 1–4
+   above), then open `dashboard/index.html`, look up `SW-00123`, and
+   click **Pay now**.
+5. You should land on PayGate's actual hosted sandbox payment page.
+   Complete a test payment there (PayGate's sandbox accepts dummy card
+   details — see their PayWeb3 docs for the current test card numbers).
+6. PayGate will call your `/payments/notify` webhook via the tunnel.
+   Confirm in the API logs that the checksum verified and the
+   transaction was recorded, then refresh the dashboard — the balance
+   should reflect the payment.
+7. If anything fails at step 3 (PayGate initiate) or step 6 (the
+   notify checksum), that's the signal to re-check the exact field
+   list/order against PayGate's current PayWeb3 integration guide —
+   checksum mismatches are the most common failure mode with this kind
+   of API, and the field set in `app/psp.py` was written from the
+   documented spec but never confirmed against a live response.
 
 ## What's built (Sprints 1 & 2)
 
