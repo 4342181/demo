@@ -1,4 +1,4 @@
-# Municipal Rail — Sprint 1, 2 & 3
+# Municipal Rail — Sprint 1, 2, 3 & 4
 
 The integration adapter, account/billing engine, and reconciliation +
 audit trail described in the architecture plan. This is the backend
@@ -61,8 +61,9 @@ curl -X POST http://localhost:8000/municipalities/1/ingest \
 curl http://localhost:8000/municipalities/1/accounts
 ```
 
-5. **Record a payment** (Sprint 4 will trigger this from a real PSP
-   webhook instead of a manual call — the ledger logic is the same)
+5. **Record a payment manually** (for admin/cash-at-office entries —
+   resident-initiated payments go through `/payments/initiate` instead,
+   see Sprint 4 below)
 
 ```bash
 curl -X POST http://localhost:8000/payments \
@@ -107,6 +108,45 @@ new `GET /municipalities/{id}/accounts/lookup?account_number=...` for
 looking accounts up the way a resident actually identifies their account
 (by account number on their bill, not our internal database id).
 
+## PSP integration (Sprint 4) — PayGate PayWeb3
+
+Resident-initiated payments now go through a real PSP instead of a
+manual call:
+
+```bash
+curl -X POST http://localhost:8000/payments/initiate \
+  -H "Content-Type: application/json" \
+  -d '{"account_id": 1, "amount": 200, "return_url": "https://example.org/return"}'
+```
+
+This returns a `redirect_url` to PayGate's hosted payment page. PayGate
+then calls our `/payments/notify` webhook server-to-server once the
+resident pays — that webhook, not the browser redirect, is the only
+thing that updates the account balance, and it's checksum-verified and
+idempotent against PayGate retrying the notification.
+
+The dashboard and WhatsApp mockup (Sprint 3) both call
+`/payments/initiate` for their "pay now" / "pay" flows and poll
+`/payments/{id}/status` afterwards.
+
+**Sandbox setup notes:**
+- Defaults to PayGate's published test merchant
+  (`PAYGATE_ID=10011072154`, key `secret`) — override with the
+  `PAYGATE_ID` / `PAYGATE_ENCRYPTION_KEY` env vars for a real account.
+- PayGate's notify webhook needs a publicly reachable URL — for local
+  testing, tunnel `localhost:8000` with something like `ngrok` and pass
+  that URL through as `NOTIFY_URL` (currently derived from the
+  request's own base URL in `app/main.py`).
+- The checksum algorithm and ledger/idempotency logic
+  (`app/psp.py`, `app/reconciliation.py`) are unit-tested in
+  `tests/test_psp.py` (`pytest tests/`) and were also exercised
+  end-to-end by simulating a PayGate notify POST directly — but the
+  actual HTTP call to PayGate's initiate endpoint has not been verified
+  against a live sandbox session yet. Re-check the field list/order in
+  PayGate's current PayWeb3 integration guide before depending on this
+  in production; checksum mismatches are the most common failure mode
+  with this kind of API.
+
 ## What's built (Sprints 1 & 2)
 
 - **Integration Adapter Layer** (`app/ingest.py`) — reads any CSV/Excel
@@ -124,6 +164,8 @@ looking accounts up the way a resident actually identifies their account
 
 ## What's next
 
-- Sprint 4: replace the manual `/payments` endpoint with a real PSP
-  webhook (Peach Payments or PayGate sandbox), and replace the WhatsApp
-  mockup with a real WhatsApp Business API/BSP sandbox integration.
+- Verify the PayGate PayWeb3 integration against a live sandbox session
+  (this environment can't make outbound calls to PayGate to test that
+  part directly — see Sprint 4 notes above).
+- Replace the WhatsApp mockup with a real WhatsApp Business API/BSP
+  sandbox integration.

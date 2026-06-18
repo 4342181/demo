@@ -91,6 +91,31 @@ class Transaction(Base):
     account = relationship("Account", back_populates="transactions")
 
 
+class PendingPayment(Base):
+    """
+    A payment initiated through the PSP (PayGate PayWeb3) but not yet
+    confirmed. Created when the resident clicks "pay", resolved when the
+    PSP's notify webhook confirms or fails it. Tracking this separately
+    from Transaction means a resident closing their browser mid-payment
+    doesn't leave the ledger in an ambiguous state.
+    """
+    __tablename__ = "pending_payments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    account_id = Column(Integer, ForeignKey("accounts.id"), nullable=False)
+
+    amount = Column(Float, nullable=False)
+    reference = Column(String, nullable=False, unique=True)  # our reference, sent to PSP
+    pay_request_id = Column(String, nullable=True, index=True)  # PSP's id, set after initiate
+    status = Column(String, default="pending")  # pending, completed, failed
+    transaction_id = Column(Integer, ForeignKey("transactions.id"), nullable=True)
+
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+
+    account = relationship("Account")
+
+
 class Ticket(Base):
     """A logged service/fault request tied to an account or resident."""
     __tablename__ = "tickets"

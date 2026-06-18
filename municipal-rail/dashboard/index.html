@@ -132,25 +132,24 @@ async function loadHistory() {
 async function payNow() {
   if (!currentAccount) return;
   clearMsg('account-action-msg');
-  const amount = prompt('Amount to pay (mocked — no real PSP yet):', currentAccount.balance);
+  const amount = prompt('Amount to pay:', currentAccount.balance);
   if (!amount) return;
   try {
-    const res = await fetch(`${API_BASE}/payments`, {
+    // Real flow: hand off to PayGate. The balance only updates once
+    // PayGate's notify webhook confirms the payment server-to-server —
+    // this redirect is just where the resident's browser ends up.
+    const res = await fetch(`${API_BASE}/payments/initiate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         account_id: currentAccount.id,
         amount: parseFloat(amount),
-        reference: `DASH-${Date.now()}`,
-        description: 'Resident payment via reference dashboard',
+        return_url: window.location.href,
       }),
     });
-    if (!res.ok) throw new Error((await res.json()).detail || 'Payment failed');
+    if (!res.ok) throw new Error((await res.json()).detail || 'Could not start payment');
     const result = await res.json();
-    currentAccount.balance = result.new_balance;
-    renderAccount();
-    showMsg('account-action-msg', 'Payment recorded. New balance reflects immediately.', 'success');
-    await loadHistory();
+    window.location.href = result.redirect_url;
   } catch (err) {
     showMsg('account-action-msg', err.message, 'error');
   }

@@ -103,21 +103,50 @@ async function handleInput(text) {
       botSay('Please enter a valid amount, e.g. 200');
       return;
     }
-    const res = await fetch(`${API_BASE}/payments`, {
+    // Real flow: a WhatsApp bot would send a PayGate payment link, the
+    // resident pays in their browser, and PayGate's webhook confirms the
+    // payment server-to-server — the bot finds out by polling status (or
+    // would itself receive a webhook in a real BSP integration).
+    const res = await fetch(`${API_BASE}/payments/initiate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         account_id: session.account.id,
         amount,
-        reference: `WA-${Date.now()}`,
-        description: 'Resident payment via WhatsApp mockup',
+        return_url: window.location.href,
       }),
     });
+    if (!res.ok) {
+      botSay("Sorry, couldn't start the payment right now. Please try again later.");
+      session.stage = 'menu';
+      setQuickReplies(['balance', 'pay', 'report fault']);
+      return;
+    }
     const result = await res.json();
-    session.account.balance = result.new_balance;
-    session.stage = 'menu';
-    botSay(`Payment of R ${amount.toFixed(2)} received. New balance: R ${Number(result.new_balance).toFixed(2)}.`);
-    setQuickReplies(['balance', 'pay', 'report fault']);
+    session.pendingPaymentId = result.pending_payment_id;
+    session.stage = 'await_payment_confirmation';
+    botSay(`Tap to pay: ${result.redirect_url}\n\nOnce you've paid, reply "done" and I'll check.`);
+    setQuickReplies(['done']);
+    return;
+  }
+
+  if (session.stage === 'await_payment_confirmation') {
+    const res = await fetch(`${API_BASE}/payments/${session.pendingPaymentId}/status`);
+    const result = await res.json();
+    if (result.status === 'completed') {
+      session.stage = 'menu';
+      botSay('Payment confirmed, thank you! Your balance has been updated.');
+      const acctRes = await fetch(`${API_BASE}/municipalities/${MUNICIPALITY_ID}/accounts/lookup?account_number=${encodeURIComponent(session.account.account_number)}`);
+      session.account = await acctRes.json();
+      setQuickReplies(['balance', 'pay', 'report fault']);
+    } else if (result.status === 'failed') {
+      session.stage = 'menu';
+      botSay("That payment wasn't successful. Want to try again?");
+      setQuickReplies(['balance', 'pay', 'report fault']);
+    } else {
+      botSay("Still waiting for confirmation. Reply \"done\" again once you've paid.");
+      setQuickReplies(['done']);
+    }
     return;
   }
 

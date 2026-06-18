@@ -21,9 +21,18 @@ def record_payment(
 ) -> models.Transaction:
     """
     Records a payment against an account and updates its balance.
-    In Sprint 4 this is called by the PSP webhook instead of manual entry —
-    the ledger logic underneath doesn't change.
+    Idempotent on `reference`: PSPs retry webhook notifications, so if a
+    transaction with this source_reference already exists, that existing
+    transaction is returned instead of double-crediting the account.
     """
+    existing = (
+        db.query(models.Transaction)
+        .filter_by(account_id=account.id, source_reference=reference, type="payment")
+        .first()
+    )
+    if existing:
+        return existing
+
     account.balance = round(account.balance - amount, 2)
     account.updated_at = datetime.datetime.utcnow()
 
