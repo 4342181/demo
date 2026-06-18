@@ -19,7 +19,7 @@ common integration failure with this kind of API.
 
 Sandbox-only test credentials (PayGate's permanent published test
 merchant, safe to use for development without registering):
-  PAYGATE_ID = 10011072154
+  PAYGATE_ID = 10011072130
   ENCRYPTION_KEY = secret
 """
 import hashlib
@@ -28,7 +28,7 @@ import os
 
 import httpx
 
-PAYGATE_ID = os.environ.get("PAYGATE_ID", "10011072154")
+PAYGATE_ID = os.environ.get("PAYGATE_ID", "10011072130")
 ENCRYPTION_KEY = os.environ.get("PAYGATE_ENCRYPTION_KEY", "secret")
 
 PAYGATE_INITIATE_URL = "https://secure.paygate.co.za/payweb3/initiate.trans"
@@ -84,6 +84,11 @@ async def initiate_payment(
     async with httpx.AsyncClient(timeout=15) as client:
         response = await client.post(PAYGATE_INITIATE_URL, data=fields)
         response.raise_for_status()
+
+    # Logged so a checksum/field mismatch (PayGate's DATA_CHK) can be
+    # diagnosed from the request we sent vs. the raw response we got back.
+    print("[psp] initiate request fields:", fields)
+    print("[psp] initiate raw response:", response.text)
 
     parsed = dict(item.split("=", 1) for item in response.text.split("&") if "=" in item)
 
