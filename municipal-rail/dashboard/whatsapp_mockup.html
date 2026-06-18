@@ -35,6 +35,7 @@
 
 <script>
 const API_BASE = new URLSearchParams(window.location.search).get('api') || window.API_BASE || "http://localhost:8000";
+const NGROK_HEADERS = { 'ngrok-skip-browser-warning': 'true' };
 const MUNICIPALITY_ID = 1;
 let session = { stage: 'await_account', account: null };
 
@@ -68,7 +69,7 @@ async function handleInput(text) {
 
   if (session.stage === 'await_account') {
     try {
-      const res = await fetch(`${API_BASE}/municipalities/${MUNICIPALITY_ID}/accounts/lookup?account_number=${encodeURIComponent(text.trim())}`);
+      const res = await fetch(`${API_BASE}/municipalities/${MUNICIPALITY_ID}/accounts/lookup?account_number=${encodeURIComponent(text.trim())}`, { headers: NGROK_HEADERS });
       if (!res.ok) throw new Error('not found');
       session.account = await res.json();
       session.stage = 'menu';
@@ -112,7 +113,7 @@ async function handleInput(text) {
       : `${API_BASE}/docs`;
     const res = await fetch(`${API_BASE}/payments/initiate`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...NGROK_HEADERS },
       body: JSON.stringify({
         account_id: session.account.id,
         amount,
@@ -138,7 +139,7 @@ async function handleInput(text) {
   }
 
   if (session.stage === 'await_payment_confirmation') {
-    const res = await fetch(`${API_BASE}/payments/${session.pendingPaymentId}/status`);
+    const res = await fetch(`${API_BASE}/payments/${session.pendingPaymentId}/status`, { headers: NGROK_HEADERS });
     const result = await res.json();
     if (result.status === 'completed') {
       session.stage = 'menu';
@@ -167,7 +168,7 @@ async function handleInput(text) {
   if (session.stage === 'await_fault_description') {
     const res = await fetch(`${API_BASE}/tickets`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...NGROK_HEADERS },
       body: JSON.stringify({
         municipality_id: MUNICIPALITY_ID,
         account_id: session.account.id,

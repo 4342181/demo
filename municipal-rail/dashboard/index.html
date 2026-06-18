@@ -80,6 +80,7 @@
 
 <script>
 const API_BASE = new URLSearchParams(window.location.search).get('api') || window.API_BASE || "http://localhost:8000";
+const NGROK_HEADERS = { 'ngrok-skip-browser-warning': 'true' };
 let currentAccount = null;
 
 function showMsg(elId, text, kind) {
@@ -96,7 +97,7 @@ async function lookupAccount() {
   if (!accountNumber) { showMsg('lookup-msg', 'Enter an account number.', 'error'); return; }
 
   try {
-    const res = await fetch(`${API_BASE}/municipalities/${municipalityId}/accounts/lookup?account_number=${encodeURIComponent(accountNumber)}`);
+    const res = await fetch(`${API_BASE}/municipalities/${municipalityId}/accounts/lookup?account_number=${encodeURIComponent(accountNumber)}`, { headers: NGROK_HEADERS });
     if (!res.ok) throw new Error((await res.json()).detail || 'Account not found');
     currentAccount = await res.json();
     renderAccount();
@@ -116,7 +117,7 @@ function renderAccount() {
 }
 
 async function loadHistory() {
-  const res = await fetch(`${API_BASE}/accounts/${currentAccount.id}/history`);
+  const res = await fetch(`${API_BASE}/accounts/${currentAccount.id}/history`, { headers: NGROK_HEADERS });
   if (!res.ok) return;
   const data = await res.json();
   const tbody = document.querySelector('#history-table tbody');
@@ -145,7 +146,7 @@ async function payNow() {
       : `${API_BASE}/docs`;
     const res = await fetch(`${API_BASE}/payments/initiate`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...NGROK_HEADERS },
       body: JSON.stringify({
         account_id: currentAccount.id,
         amount: parseFloat(amount),
@@ -194,7 +195,7 @@ async function submitFault() {
   try {
     const res = await fetch(`${API_BASE}/tickets`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...NGROK_HEADERS },
       body: JSON.stringify({
         municipality_id: parseInt(document.getElementById('municipality-id').value),
         account_id: currentAccount ? currentAccount.id : null,
