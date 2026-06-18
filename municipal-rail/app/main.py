@@ -7,6 +7,7 @@ reference UI, a WhatsApp flow, or a partner platform like GovChat / My
 Smart City) can plug into.
 """
 from fastapi import FastAPI, Depends, HTTPException, UploadFile, File
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 from . import models, schemas, ingest, reconciliation
@@ -15,6 +16,15 @@ from .database import Base, engine, get_db
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Municipal Rail API", version="0.1.0")
+
+# The reference dashboard and WhatsApp mockup (Sprint 3) are static pages
+# opened directly in a browser, so they call this API cross-origin.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 # ---------- Municipalities & onboarding ----------
@@ -78,6 +88,20 @@ async def ingest_billing_export(
 @app.get("/municipalities/{municipality_id}/accounts")
 def list_accounts(municipality_id: int, db: Session = Depends(get_db)):
     return db.query(models.Account).filter_by(municipality_id=municipality_id).all()
+
+
+@app.get("/municipalities/{municipality_id}/accounts/lookup")
+def lookup_account(municipality_id: int, account_number: str, db: Session = Depends(get_db)):
+    """Citizen-facing lookup by account number — what a resident actually has
+    on their bill, as opposed to our internal database id."""
+    account = (
+        db.query(models.Account)
+        .filter_by(municipality_id=municipality_id, account_number=account_number.strip())
+        .first()
+    )
+    if not account:
+        raise HTTPException(404, "Account not found")
+    return account
 
 
 @app.get("/accounts/{account_id}")

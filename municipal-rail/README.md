@@ -1,4 +1,4 @@
-# Municipal Rail — Sprint 1 & 2
+# Municipal Rail — Sprint 1, 2 & 3
 
 The integration adapter, account/billing engine, and reconciliation +
 audit trail described in the architecture plan. This is the backend
@@ -84,6 +84,29 @@ curl -X POST http://localhost:8000/tickets \
   -d '{"municipality_id": 1, "account_id": 1, "category": "water", "description": "No water since this morning"}'
 ```
 
+## Reference UI (Sprint 3) — what you demo, not the product
+
+Two static, no-build-step pages call the same API directly in a browser.
+They're a reference for what a real front end (web dashboard or WhatsApp
+BSP integration) would do — not something to ship to residents as-is.
+
+1. With the API running on `localhost:8000`, open
+   `municipal-rail/dashboard/index.html` directly in a browser (e.g.
+   `open municipal-rail/dashboard/index.html`). Enter a municipality ID
+   and account number (e.g. `1` and `SW-00123` from the sample export)
+   to see balance, payment history, a mocked "pay now", and fault logging.
+2. Open `municipal-rail/dashboard/whatsapp_mockup.html` the same way for a
+   WhatsApp-style chat mockup of the same flows (`balance`, `pay`,
+   `report fault`) — a stand-in for a real WhatsApp Business API/BSP
+   integration, which is Sprint 4+ scope.
+
+Both pages call `http://localhost:8000` by default; the API has CORS
+enabled (`app/main.py`) so they can be opened as local files. Behind the
+scenes, both use the same account/payment/ticket endpoints — including a
+new `GET /municipalities/{id}/accounts/lookup?account_number=...` for
+looking accounts up the way a resident actually identifies their account
+(by account number on their bill, not our internal database id).
+
 ## What's built (Sprints 1 & 2)
 
 - **Integration Adapter Layer** (`app/ingest.py`) — reads any CSV/Excel
@@ -101,7 +124,6 @@ curl -X POST http://localhost:8000/tickets \
 
 ## What's next
 
-- Sprint 3: a thin reference web dashboard + WhatsApp flow mockup that
-  call this API — for demos, not as the product itself.
 - Sprint 4: replace the manual `/payments` endpoint with a real PSP
-  webhook (Peach Payments or PayGate sandbox).
+  webhook (Peach Payments or PayGate sandbox), and replace the WhatsApp
+  mockup with a real WhatsApp Business API/BSP sandbox integration.
