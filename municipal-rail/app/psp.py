@@ -98,7 +98,9 @@ async def initiate_payment(
     pay_request_id = parsed["PAY_REQUEST_ID"]
     checksum = parsed["CHECKSUM"]
 
-    expected = _checksum([PAYGATE_ID, pay_request_id])
+    # PayWeb3 initiate-response checksum is MD5 of
+    # PAYGATE_ID + PAY_REQUEST_ID + REFERENCE + encryption key.
+    expected = _checksum([PAYGATE_ID, pay_request_id, parsed.get("REFERENCE", reference)])
     if checksum != expected:
         raise ValueError("PayGate initiate response failed checksum verification")
 
