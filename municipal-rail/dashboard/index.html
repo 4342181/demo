@@ -79,7 +79,7 @@
 </main>
 
 <script>
-const API_BASE = window.API_BASE || "http://localhost:8000";
+const API_BASE = new URLSearchParams(window.location.search).get('api') || window.API_BASE || "http://localhost:8000";
 let currentAccount = null;
 
 function showMsg(elId, text, kind) {
