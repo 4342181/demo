@@ -1,0 +1,24 @@
+from pydantic import BaseModel
+
+
+class MunicipalityCreate(BaseModel):
+    name: str
+
+
+class ColumnMappingCreate(BaseModel):
+    municipality_id: int
+    mapping: dict[str, str]  # canonical_field -> source_column_name
+
+
+class PaymentCreate(BaseModel):
+    account_id: int
+    amount: float
+    reference: str
+    description: str | None = "Resident payment"
+
+
+class TicketCreate(BaseModel):
+    municipality_id: int
+    account_id: int | None = None
+    category: str
+    description: str
