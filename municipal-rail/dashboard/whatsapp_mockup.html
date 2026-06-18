@@ -110,7 +110,7 @@ async function handleInput(text) {
     // would itself receive a webhook in a real BSP integration).
     const returnUrl = window.location.href.startsWith('http')
       ? window.location.href
-      : `${API_BASE}/docs`;
+      : `${API_BASE}/payments/return`;
     const res = await fetch(`${API_BASE}/payments/initiate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...NGROK_HEADERS },

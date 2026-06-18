@@ -10,6 +10,7 @@ import uuid
 
 from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 
 from . import models, schemas, ingest, reconciliation, psp
@@ -230,6 +231,47 @@ async def payment_notify(request: Request, db: Session = Depends(get_db)):
     db.commit()
 
     return {"status": "completed"}
+
+
+@app.api_route("/payments/return", methods=["GET", "POST"], response_class=HTMLResponse)
+async def payment_return(request: Request):
+    """
+    Where PayGate redirects the resident's browser after they finish on the
+    hosted payment page. PayGate POSTs the transaction result here, so this
+    must accept POST (a GET-only page like /docs returns 'Method Not
+    Allowed'). This is purely the landing page the resident sees — it is NOT
+    what confirms the payment. The balance is only ever updated by the
+    server-to-server /payments/notify webhook, which is checksum-verified.
+    So we show a neutral "we're confirming your payment" message rather than
+    asserting success from this untrusted redirect.
+    """
+    return """<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Payment received — Municipal Rail</title>
+  <style>
+    body { font-family: -apple-system, Arial, sans-serif; background: #f1f4f8;
+           margin: 0; color: #1f2d3d; display: flex; min-height: 100vh;
+           align-items: center; justify-content: center; }
+    .card { background: white; border-radius: 10px; padding: 32px 28px;
+            max-width: 420px; text-align: center;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    h1 { color: #0b3d2e; font-size: 20px; margin: 0 0 12px; }
+    p { font-size: 14px; line-height: 1.5; color: #555; }
+    .check { font-size: 40px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="check">&#9989;</div>
+    <h1>Thank you &mdash; payment received</h1>
+    <p>We're confirming your payment with the payment provider. Your account
+       balance will update automatically once it's confirmed.</p>
+    <p>You can close this tab and return to your account.</p>
+  </div>
+</body>
+</html>"""
 
 
 @app.get("/payments/{pending_payment_id}/status")

@@ -140,10 +140,11 @@ async function payNow() {
     // PayGate's notify webhook confirms the payment server-to-server —
     // the form POST below is just where the resident's browser ends up.
     // PayGate only lets you redirect back to an http(s) URL, so when this
-    // page is opened as a local file we fall back to the API's /docs page.
+    // page is opened as a local file we fall back to the API's
+    // /payments/return landing page (which accepts PayGate's POST).
     const returnUrl = window.location.href.startsWith('http')
       ? window.location.href
-      : `${API_BASE}/docs`;
+      : `${API_BASE}/payments/return`;
     const res = await fetch(`${API_BASE}/payments/initiate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...NGROK_HEADERS },
