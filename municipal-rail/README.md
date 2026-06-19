@@ -71,7 +71,9 @@ curl -X POST http://localhost:8000/payments \
   -d '{"account_id": 1, "amount": 200, "reference": "PSP-TEST-001"}'
 ```
 
-6. **Pull the audit export** — the post-Madlanga selling point made real
+6. **Pull the audit export** — a flat, exportable record of every transaction
+   (unverified whether this addresses a real unmet need at any specific
+   municipality — see "What's next")
 
 ```bash
 curl http://localhost:8000/municipalities/1/audit-export

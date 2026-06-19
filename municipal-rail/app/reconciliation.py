@@ -1,9 +1,8 @@
 """
 Reconciliation + Audit Trail — Module 2 & 4.
 
-Records payments against accounts and produces the immutable, exportable
-audit trail that is the actual sellable feature post-Madlanga: proof that
-every transaction is logged, time-stamped, and traceable.
+Records payments against accounts and produces an immutable, exportable
+audit trail: every transaction is logged, time-stamped, and traceable.
 """
 import datetime
 
