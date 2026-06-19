@@ -29,3 +29,10 @@ class TicketCreate(BaseModel):
     account_id: int | None = None
     category: str
     description: str
+
+
+class VerificationEventCreate(BaseModel):
+    method: str  # id_check, income_check, manual_review, data_cleanse
+    result: str  # pass, fail, flagged
+    notes: str | None = None
+    performed_by: str | None = None

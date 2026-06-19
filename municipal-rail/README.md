@@ -209,6 +209,37 @@ reach your local webhook.
 - **Tickets** — basic fault/service request logging with a citizen-facing
   reference number, tied to an account where available.
 
+## Indigent register & verification (Sprint 5)
+
+A second register type the same ingestion/audit-trail engine can run on,
+separate from billing. Multiple municipal tenders (Drakenstein, Ndlambe,
+Swartland, Musina, and ~25 others verified across 8 provinces — see repo
+history for the full list) procure exactly this recurring scope: ingest
+an indigent register export, run verification checks against it (ID
+lookup, income re-assessment, manual review, data cleanse), and produce
+an audit trail of who checked what and when. That's the same shape as
+the billing reconciliation module, applied to a different canonical
+schema.
+
+```bash
+curl -X POST http://localhost:8000/municipalities/1/indigent-column-mapping \
+  -H "Content-Type: application/json" \
+  -d '{"municipality_id": 1, "mapping": {"applicant_id_number": "IDNumber", "applicant_name": "FullName", "household_income": "Income", "subsidy_category": "Category", "status": "Status"}}'
+
+curl -X POST http://localhost:8000/municipalities/1/indigent-register/ingest \
+  -F "file=@sample_data/indigent_register_export.csv"
+
+curl -X POST http://localhost:8000/indigent-register/1/verify \
+  -H "Content-Type: application/json" \
+  -d '{"method": "id_check", "result": "pass", "performed_by": "admin"}'
+
+curl http://localhost:8000/municipalities/1/indigent-audit-export
+```
+
+A `pass` re-activates a `pending`/`expired` registration, a `fail` rejects
+it, and a `flagged` result drops an `active` registration back to
+`pending` for review — `app/reconciliation.py`'s `record_verification`.
+
 ## What's next
 
 - Verify the PayGate PayWeb3 integration against a live sandbox session

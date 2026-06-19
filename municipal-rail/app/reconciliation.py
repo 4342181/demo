@@ -49,6 +49,76 @@ def record_payment(
     return transaction
 
 
+def record_verification(
+    db: Session,
+    registration: models.IndigentRegistration,
+    method: str,
+    result: str,
+    notes: str | None = None,
+    performed_by: str | None = None,
+) -> models.VerificationEvent:
+    """
+    Records a verification check (ID lookup, income re-assessment, manual
+    review, data cleanse) against an indigent registration. Each event is
+    immutable once written — the running history across events is the
+    audit trail tenders ask for ("who/what/when").
+    """
+    event = models.VerificationEvent(
+        registration_id=registration.id,
+        method=method,
+        result=result,
+        notes=notes,
+        performed_by=performed_by,
+    )
+    db.add(event)
+
+    if result == "fail":
+        registration.status = "rejected"
+    elif result == "flagged" and registration.status == "active":
+        registration.status = "pending"
+    elif result == "pass" and registration.status in ("pending", "expired"):
+        registration.status = "active"
+    registration.updated_at = datetime.datetime.utcnow()
+
+    db.commit()
+    db.refresh(event)
+    return event
+
+
+def build_indigent_audit_export(db: Session, municipality_id: int) -> list[dict]:
+    """
+    Flat, exportable audit record of every verification event run against
+    every indigent registration for a municipality — the same shape as
+    `build_audit_export` below, but for the indigent register rather than
+    the billing ledger.
+    """
+    rows = (
+        db.query(models.VerificationEvent, models.IndigentRegistration)
+        .join(
+            models.IndigentRegistration,
+            models.VerificationEvent.registration_id == models.IndigentRegistration.id,
+        )
+        .filter(models.IndigentRegistration.municipality_id == municipality_id)
+        .order_by(models.VerificationEvent.occurred_at.desc())
+        .all()
+    )
+
+    return [
+        {
+            "verification_event_id": event.id,
+            "occurred_at": event.occurred_at.isoformat(),
+            "applicant_id_number": registration.applicant_id_number,
+            "applicant_name": registration.applicant_name,
+            "registration_status": registration.status,
+            "method": event.method,
+            "result": event.result,
+            "performed_by": event.performed_by,
+            "notes": event.notes,
+        }
+        for event, registration in rows
+    ]
+
+
 def build_audit_export(db: Session, municipality_id: int) -> list[dict]:
     """
     Produces a flat, exportable audit record: every transaction across

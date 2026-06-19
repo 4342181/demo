@@ -56,10 +56,33 @@ def set_column_mapping(municipality_id: int, payload: schemas.ColumnMappingCreat
     if not municipality:
         raise HTTPException(404, "Municipality not found")
 
-    if municipality.column_mapping:
-        municipality.column_mapping.mapping = payload.mapping
+    existing = municipality.column_mapping_for("billing")
+    if existing:
+        existing.mapping = payload.mapping
     else:
-        db.add(models.ColumnMapping(municipality_id=municipality_id, mapping=payload.mapping))
+        db.add(models.ColumnMapping(
+            municipality_id=municipality_id, register_type="billing", mapping=payload.mapping
+        ))
+
+    db.commit()
+    return {"municipality_id": municipality_id, "mapping": payload.mapping}
+
+
+@app.post("/municipalities/{municipality_id}/indigent-column-mapping")
+def set_indigent_column_mapping(
+    municipality_id: int, payload: schemas.ColumnMappingCreate, db: Session = Depends(get_db)
+):
+    municipality = db.query(models.Municipality).get(municipality_id)
+    if not municipality:
+        raise HTTPException(404, "Municipality not found")
+
+    existing = municipality.column_mapping_for("indigent")
+    if existing:
+        existing.mapping = payload.mapping
+    else:
+        db.add(models.ColumnMapping(
+            municipality_id=municipality_id, register_type="indigent", mapping=payload.mapping
+        ))
 
     db.commit()
     return {"municipality_id": municipality_id, "mapping": payload.mapping}
@@ -84,6 +107,77 @@ async def ingest_billing_export(
         raise HTTPException(400, str(exc))
 
     return result
+
+
+# ---------- Indigent Register & Verification ----------
+
+@app.post("/municipalities/{municipality_id}/indigent-register/ingest")
+async def ingest_indigent_register(
+    municipality_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    municipality = db.query(models.Municipality).get(municipality_id)
+    if not municipality:
+        raise HTTPException(404, "Municipality not found")
+
+    file_bytes = await file.read()
+    try:
+        result = ingest.ingest_indigent_register(db, municipality, file_bytes, file.filename)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+
+    return result
+
+
+@app.get("/municipalities/{municipality_id}/indigent-register")
+def list_indigent_registrations(municipality_id: int, db: Session = Depends(get_db)):
+    return db.query(models.IndigentRegistration).filter_by(municipality_id=municipality_id).all()
+
+
+@app.get("/indigent-register/{registration_id}")
+def get_indigent_registration(registration_id: int, db: Session = Depends(get_db)):
+    registration = db.query(models.IndigentRegistration).get(registration_id)
+    if not registration:
+        raise HTTPException(404, "Registration not found")
+    return registration
+
+
+@app.post("/indigent-register/{registration_id}/verify")
+def verify_indigent_registration(
+    registration_id: int, payload: schemas.VerificationEventCreate, db: Session = Depends(get_db)
+):
+    registration = db.query(models.IndigentRegistration).get(registration_id)
+    if not registration:
+        raise HTTPException(404, "Registration not found")
+
+    event = reconciliation.record_verification(
+        db, registration, payload.method, payload.result, payload.notes, payload.performed_by
+    )
+    return {"verification_event_id": event.id, "registration_status": registration.status}
+
+
+@app.get("/indigent-register/{registration_id}/verification-history")
+def get_verification_history(registration_id: int, db: Session = Depends(get_db)):
+    registration = db.query(models.IndigentRegistration).get(registration_id)
+    if not registration:
+        raise HTTPException(404, "Registration not found")
+
+    events = (
+        db.query(models.VerificationEvent)
+        .filter_by(registration_id=registration_id)
+        .order_by(models.VerificationEvent.occurred_at.desc())
+        .all()
+    )
+    return {"registration": registration, "verification_events": events}
+
+
+@app.get("/municipalities/{municipality_id}/indigent-audit-export")
+def indigent_audit_export(municipality_id: int, db: Session = Depends(get_db)):
+    municipality = db.query(models.Municipality).get(municipality_id)
+    if not municipality:
+        raise HTTPException(404, "Municipality not found")
+    return reconciliation.build_indigent_audit_export(db, municipality_id)
 
 
 # ---------- Account & Billing Engine (Module 2) ----------

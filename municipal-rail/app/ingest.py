@@ -25,6 +25,12 @@ CANONICAL_TRANSACTION_FIELDS = [
 
 REQUIRED_ACCOUNT_FIELDS = {"account_number", "resident_name", "balance"}
 
+CANONICAL_INDIGENT_FIELDS = [
+    "applicant_id_number", "applicant_name", "account_number",
+    "household_income", "subsidy_category", "status", "expires_at",
+]
+REQUIRED_INDIGENT_FIELDS = {"applicant_id_number", "applicant_name"}
+
 
 def read_tabular_file(file_bytes: bytes, filename: str) -> pd.DataFrame:
     """Reads a CSV or Excel file into a DataFrame, regardless of which format
@@ -58,6 +64,15 @@ def validate_account_columns(df: pd.DataFrame) -> None:
         )
 
 
+def validate_indigent_columns(df: pd.DataFrame) -> None:
+    missing = REQUIRED_INDIGENT_FIELDS - set(df.columns)
+    if missing:
+        raise ValueError(
+            f"Mapping is missing required field(s): {', '.join(sorted(missing))}. "
+            "Check the municipality's indigent column mapping configuration."
+        )
+
+
 def ingest_accounts(
     db: Session,
     municipality: models.Municipality,
@@ -71,14 +86,15 @@ def ingest_accounts(
     the balance snapshot, so re-ingesting the same export monthly builds
     a real history rather than silently overwriting it.
     """
-    if not municipality.column_mapping:
+    column_mapping = municipality.column_mapping_for("billing")
+    if not column_mapping:
         raise ValueError(
-            f"No column mapping configured for municipality '{municipality.name}'. "
+            f"No billing column mapping configured for municipality '{municipality.name}'. "
             "Set one up before ingesting data."
         )
 
     raw_df = read_tabular_file(file_bytes, filename)
-    df = apply_mapping(raw_df, municipality.column_mapping.mapping, CANONICAL_ACCOUNT_FIELDS)
+    df = apply_mapping(raw_df, column_mapping.mapping, CANONICAL_ACCOUNT_FIELDS)
     validate_account_columns(df)
 
     created, updated = 0, 0
@@ -121,6 +137,81 @@ def ingest_accounts(
             description=f"Imported from {filename}",
             source_reference=f"{filename}:row{row_index}",
         ))
+
+    db.commit()
+    return {"created": created, "updated": updated, "rows_processed": len(df)}
+
+
+def ingest_indigent_register(
+    db: Session,
+    municipality: models.Municipality,
+    file_bytes: bytes,
+    filename: str,
+) -> dict:
+    """
+    Ingests an indigent register export the same way `ingest_accounts`
+    ingests a billing export: normalize via the municipality's indigent
+    column mapping, then upsert each row (matched on applicant_id_number)
+    so re-ingesting monthly/quarterly builds history instead of overwriting
+    it — that history is itself the audit trail a verification tender asks
+    for.
+    """
+    column_mapping = municipality.column_mapping_for("indigent")
+    if not column_mapping:
+        raise ValueError(
+            f"No indigent column mapping configured for municipality '{municipality.name}'. "
+            "Set one up before ingesting data."
+        )
+
+    raw_df = read_tabular_file(file_bytes, filename)
+    df = apply_mapping(raw_df, column_mapping.mapping, CANONICAL_INDIGENT_FIELDS)
+    validate_indigent_columns(df)
+
+    created, updated = 0, 0
+
+    for row_index, row in df.iterrows():
+        id_number = str(row["applicant_id_number"]).strip()
+
+        account = None
+        account_number = row.get("account_number")
+        if account_number and not pd.isna(account_number):
+            account = (
+                db.query(models.Account)
+                .filter_by(municipality_id=municipality.id, account_number=str(account_number).strip())
+                .first()
+            )
+
+        household_income = row.get("household_income")
+        household_income = (
+            float(household_income) if household_income is not None and not pd.isna(household_income) else None
+        )
+
+        registration = (
+            db.query(models.IndigentRegistration)
+            .filter_by(municipality_id=municipality.id, applicant_id_number=id_number)
+            .first()
+        )
+
+        if registration is None:
+            registration = models.IndigentRegistration(
+                municipality_id=municipality.id,
+                account_id=account.id if account else None,
+                applicant_id_number=id_number,
+                applicant_name=str(row.get("applicant_name", "")).strip(),
+                household_income=household_income,
+                subsidy_category=str(row.get("subsidy_category", "") or "") or None,
+                status=str(row.get("status", "") or "pending"),
+                source_reference=f"{filename}:row{row_index}",
+            )
+            db.add(registration)
+            created += 1
+        else:
+            registration.applicant_name = str(row.get("applicant_name", registration.applicant_name)).strip()
+            registration.household_income = household_income
+            registration.subsidy_category = str(row.get("subsidy_category", "") or "") or registration.subsidy_category
+            registration.status = str(row.get("status", "") or registration.status)
+            registration.updated_at = datetime.datetime.utcnow()
+            updated += 1
 
     db.commit()
     return {"created": created, "updated": updated, "rows_processed": len(df)}
