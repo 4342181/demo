@@ -2,42 +2,149 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Municipal Rail — Resident Dashboard (Reference UI)</title>
+<title>Municipal Rail — Resident Dashboard</title>
 <style>
-  body { font-family: -apple-system, Arial, sans-serif; background: #f1f4f8; margin: 0; padding: 0; color: #1f2d3d; }
-  header { background: #0b3d2e; color: white; padding: 18px 24px; }
-  header h1 { margin: 0; font-size: 20px; }
-  header p { margin: 4px 0 0; font-size: 13px; color: #b9d6c8; }
-  main { max-width: 640px; margin: 24px auto; padding: 0 16px; }
-  .card { background: white; border-radius: 10px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-  .card h2 { margin-top: 0; font-size: 16px; color: #0b3d2e; }
-  label { display: block; font-size: 13px; color: #555; margin-bottom: 4px; }
-  input { width: 100%; padding: 9px 10px; border: 1px solid #ccd5dd; border-radius: 6px; font-size: 14px; box-sizing: border-box; margin-bottom: 10px; }
-  button { background: #0b3d2e; color: white; border: none; padding: 10px 18px; border-radius: 6px; font-size: 14px; cursor: pointer; }
-  button:hover { background: #145c44; }
-  button.secondary { background: #5b6b79; }
-  button.secondary:hover { background: #45525e; }
-  .balance { font-size: 32px; font-weight: 700; color: #0b3d2e; }
+  :root {
+    --ink: #0f1b17;
+    --ink-soft: #4a5b54;
+    --line: #e3e9e5;
+    --surface: #ffffff;
+    --bg: #f5f7f6;
+    --brand: #0b3d2e;
+    --brand-2: #1f8a5f;
+    --accent: #d9b65a;
+    --danger: #b3261e;
+    --danger-bg: #fdecea;
+    --ok: #1b6b3a;
+    --ok-bg: #e9f6ee;
+    --radius: 14px;
+    --shadow: 0 1px 2px rgba(15,27,23,.04), 0 8px 24px -12px rgba(15,27,23,.12);
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Arial, sans-serif;
+    background: var(--bg);
+    margin: 0;
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+  body::before {
+    content: "";
+    position: fixed; inset: 0;
+    background: radial-gradient(900px 420px at 15% -10%, rgba(11,61,46,.10), transparent 60%),
+                radial-gradient(700px 380px at 100% 0%, rgba(217,182,90,.12), transparent 55%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  header {
+    position: relative; z-index: 1;
+    background: linear-gradient(135deg, var(--brand) 0%, #0e4a37 55%, #134f3c 100%);
+    color: white;
+    padding: 28px 28px 60px;
+  }
+  .header-inner { max-width: 720px; margin: 0 auto; display: flex; align-items: center; gap: 14px; }
+  .mark {
+    width: 40px; height: 40px; border-radius: 11px; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--accent), #f0d896);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 14px rgba(0,0,0,.18);
+  }
+  .mark svg { width: 22px; height: 22px; }
+  header h1 { margin: 0; font-size: 18px; font-weight: 650; letter-spacing: -.01em; }
+  header p { margin: 3px 0 0; font-size: 12.5px; color: rgba(255,255,255,.65); }
+  .badge {
+    margin-left: auto; font-size: 11px; font-weight: 600; letter-spacing: .03em;
+    color: rgba(255,255,255,.85); background: rgba(255,255,255,.12);
+    border: 1px solid rgba(255,255,255,.18); border-radius: 999px; padding: 5px 11px;
+    white-space: nowrap;
+  }
+
+  main { position: relative; z-index: 1; max-width: 720px; margin: -38px auto 40px; padding: 0 20px; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 18px;
+    box-shadow: var(--shadow);
+    animation: rise .35s ease both;
+  }
+  @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  .card h2 { margin: 0 0 16px; font-size: 14px; font-weight: 650; color: var(--brand); letter-spacing: -.01em; }
+  .card h2 .sub { display: block; font-weight: 400; color: var(--ink-soft); font-size: 12px; margin-top: 2px; }
+
+  label { display: block; font-size: 12.5px; font-weight: 600; color: var(--ink-soft); margin-bottom: 6px; }
+  input {
+    width: 100%; padding: 11px 13px; border: 1.5px solid var(--line); border-radius: 9px;
+    font-size: 14px; margin-bottom: 14px; background: #fafcfb; color: var(--ink);
+    transition: border-color .15s, background .15s;
+  }
+  input:focus { outline: none; border-color: var(--brand-2); background: white; }
+  input::placeholder { color: #9aa9a2; }
+
+  button {
+    background: var(--brand); color: white; border: none; padding: 11px 20px;
+    border-radius: 9px; font-size: 13.5px; font-weight: 600; cursor: pointer;
+    transition: transform .12s, background .15s, box-shadow .15s;
+    box-shadow: 0 1px 0 rgba(0,0,0,.05);
+  }
+  button:hover { background: #103f30; transform: translateY(-1px); }
+  button:active { transform: translateY(0); }
+  button.secondary { background: var(--surface); color: var(--brand); border: 1.5px solid var(--line); }
+  button.secondary:hover { background: #f4f7f5; border-color: var(--brand-2); }
+
+  .balance-row { display: flex; align-items: baseline; justify-content: space-between; margin: 2px 0 18px; }
+  .balance { font-size: 36px; font-weight: 700; color: var(--brand); letter-spacing: -.02em; }
+  .balance-label { font-size: 12px; font-weight: 600; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .06em; }
+  .account-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .account-head h2 { margin-bottom: 4px; font-size: 17px; color: var(--ink); }
+
+  .pill {
+    display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: .04em;
+    text-transform: uppercase; padding: 3px 9px; border-radius: 999px;
+    background: var(--ok-bg); color: var(--ok); margin-left: 8px;
+  }
+
   .row { display: flex; gap: 10px; }
   .row > * { flex: 1; }
+
   table { width: 100%; font-size: 13px; border-collapse: collapse; }
-  th, td { text-align: left; padding: 6px 4px; border-bottom: 1px solid #eee; }
-  .msg { font-size: 13px; padding: 8px 10px; border-radius: 6px; margin-bottom: 10px; }
-  .msg.error { background: #fde8e8; color: #9b1c1c; }
-  .msg.success { background: #e6f6ec; color: #1b6b3a; }
+  th { text-align: left; padding: 8px 6px; font-size: 11px; font-weight: 700; letter-spacing: .04em;
+       text-transform: uppercase; color: var(--ink-soft); border-bottom: 1.5px solid var(--line); }
+  td { padding: 11px 6px; border-bottom: 1px solid #eef2f0; }
+  tr:last-child td { border-bottom: none; }
+  .tx-type { font-size: 10.5px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase;
+             padding: 3px 8px; border-radius: 6px; background: #eef3f1; color: var(--brand); }
+
+  .msg { font-size: 13px; padding: 10px 12px; border-radius: 9px; margin-bottom: 12px; font-weight: 500; }
+  .msg.error { background: var(--danger-bg); color: var(--danger); }
+  .msg.success { background: var(--ok-bg); color: var(--ok); }
   .hidden { display: none; }
-  .muted { color: #777; font-size: 13px; }
+  .muted { color: var(--ink-soft); font-size: 13px; margin: 0 0 2px; }
+
+  .empty { text-align: center; padding: 18px 0; color: #9aa9a2; font-size: 13px; }
+  footer { text-align: center; font-size: 11.5px; color: #9aa9a2; padding: 0 0 30px; }
 </style>
 </head>
 <body>
 <header>
-  <h1>Municipal Rail — Resident Dashboard</h1>
-  <p>Reference implementation only — a demo of what calls the API, not the product itself.</p>
+  <div class="header-inner">
+    <div class="mark">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M4 17h16M4 12h16M4 7h16" stroke="#0b3d2e" stroke-width="2.4" stroke-linecap="round"/></svg>
+    </div>
+    <div>
+      <h1>Municipal Rail</h1>
+      <p>Resident account &amp; payments</p>
+    </div>
+    <span class="badge">Reference UI</span>
+  </div>
 </header>
 
 <main>
   <div class="card" id="lookup-card">
-    <h2>Find your account</h2>
+    <h2>Find your account<span class="sub">Look up by the account number on your bill</span></h2>
     <div id="lookup-msg"></div>
     <label>Municipality ID</label>
     <input id="municipality-id" type="number" value="1">
@@ -47,15 +154,21 @@
   </div>
 
   <div class="card hidden" id="account-card">
-    <h2 id="account-name"></h2>
+    <div class="account-head">
+      <h2 id="account-name"></h2>
+    </div>
     <p class="muted" id="account-meta"></p>
-    <p class="muted">Outstanding balance</p>
-    <div class="balance" id="account-balance"></div>
-    <div class="row" style="margin-top:14px;">
+    <div class="balance-row">
+      <div>
+        <div class="balance-label">Outstanding balance</div>
+        <div class="balance" id="account-balance"></div>
+      </div>
+    </div>
+    <div class="row">
       <button onclick="payNow()">Pay now</button>
       <button class="secondary" onclick="showFaultForm()">Report a fault</button>
     </div>
-    <div id="account-action-msg"></div>
+    <div id="account-action-msg" style="margin-top:12px;"></div>
   </div>
 
   <div class="card hidden" id="fault-card">
@@ -64,9 +177,11 @@
     <input id="fault-category" placeholder="water, electricity, roads...">
     <label>Description</label>
     <input id="fault-description" placeholder="No water since this morning">
-    <button onclick="submitFault()">Submit</button>
-    <button class="secondary" onclick="hideFaultForm()">Cancel</button>
-    <div id="fault-msg"></div>
+    <div class="row">
+      <button onclick="submitFault()">Submit</button>
+      <button class="secondary" onclick="hideFaultForm()">Cancel</button>
+    </div>
+    <div id="fault-msg" style="margin-top:12px;"></div>
   </div>
 
   <div class="card hidden" id="history-card">
@@ -77,6 +192,8 @@
     </table>
   </div>
 </main>
+
+<footer>Calls the Municipal Rail API directly from your browser &middot; no data leaves your session except to it</footer>
 
 <script>
 const API_BASE = new URLSearchParams(window.location.search).get('api') || window.API_BASE || "http://localhost:8000";
@@ -109,7 +226,8 @@ async function lookupAccount() {
 
 function renderAccount() {
   document.getElementById('account-card').classList.remove('hidden');
-  document.getElementById('account-name').textContent = currentAccount.resident_name;
+  document.getElementById('account-name').innerHTML =
+    `${currentAccount.resident_name}<span class="pill">Active</span>`;
   document.getElementById('account-meta').textContent =
     `${currentAccount.account_number} · ${currentAccount.account_type} · ${currentAccount.address || ''}`;
   document.getElementById('account-balance').textContent = `R ${Number(currentAccount.balance).toFixed(2)}`;
@@ -122,11 +240,17 @@ async function loadHistory() {
   const data = await res.json();
   const tbody = document.querySelector('#history-table tbody');
   tbody.innerHTML = '';
-  data.transactions.forEach(tx => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${new Date(tx.date).toLocaleDateString()}</td><td>${tx.type}</td><td>R ${Number(tx.amount).toFixed(2)}</td><td>${tx.description || ''}</td>`;
-    tbody.appendChild(tr);
-  });
+  if (!data.transactions.length) {
+    tbody.innerHTML = `<tr><td colspan="4" class="empty">No transactions yet</td></tr>`;
+  } else {
+    data.transactions.forEach(tx => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${new Date(tx.date).toLocaleDateString()}</td>` +
+        `<td><span class="tx-type">${tx.type.replace('_', ' ')}</span></td>` +
+        `<td>R ${Number(tx.amount).toFixed(2)}</td><td>${tx.description || ''}</td>`;
+      tbody.appendChild(tr);
+    });
+  }
   document.getElementById('history-card').classList.remove('hidden');
 }
 

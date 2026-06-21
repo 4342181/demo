@@ -4,26 +4,71 @@
 <meta charset="UTF-8">
 <title>Municipal Rail — WhatsApp Flow Mockup</title>
 <style>
-  body { font-family: -apple-system, Arial, sans-serif; background: #0b141a; margin: 0; }
-  .phone { max-width: 420px; margin: 24px auto; background: #e5ddd5; border-radius: 14px; overflow: hidden; box-shadow: 0 8px 30px rgba(0,0,0,0.4); }
-  .wa-header { background: #075e54; color: white; padding: 14px 16px; font-size: 15px; font-weight: 600; }
-  .wa-header span { display: block; font-size: 11px; font-weight: 400; color: #cfe9e3; margin-top: 2px; }
-  .chat { height: 520px; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
-  .bubble { max-width: 78%; padding: 8px 10px; border-radius: 8px; font-size: 13.5px; line-height: 1.4; white-space: pre-wrap; }
-  .bot { background: white; align-self: flex-start; border-top-left-radius: 0; }
-  .user { background: #dcf8c6; align-self: flex-end; border-top-right-radius: 0; }
-  .quick-replies { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 12px; background: #ece5dd; border-top: 1px solid #d4cfc7; }
-  .quick-replies button { background: white; border: 1px solid #25d366; color: #075e54; border-radius: 16px; padding: 6px 12px; font-size: 12.5px; cursor: pointer; }
-  .quick-replies button:hover { background: #e6fff0; }
-  .input-row { display: flex; gap: 6px; padding: 10px; background: #ece5dd; }
-  .input-row input { flex: 1; border: none; border-radius: 18px; padding: 9px 14px; font-size: 13.5px; }
-  .input-row button { background: #25d366; border: none; color: white; border-radius: 50%; width: 36px; height: 36px; cursor: pointer; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    margin: 0; min-height: 100vh;
+    background: radial-gradient(900px 600px at 20% 10%, #15303a, #0b141a 60%);
+    display: flex; align-items: center; justify-content: center; padding: 24px;
+  }
+  .phone {
+    width: 100%; max-width: 420px;
+    background: #efe7dd;
+    border-radius: 22px;
+    overflow: hidden;
+    box-shadow: 0 24px 60px -10px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.05);
+    border: 6px solid #1b1b1b;
+  }
+  .wa-header {
+    background: linear-gradient(135deg, #0a5c4e, #075e54 60%, #064940);
+    color: white; padding: 16px 18px; font-size: 15px; font-weight: 650;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .wa-avatar {
+    width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(135deg, #d9b65a, #f0d896);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 800; color: #0a5c4e;
+  }
+  .wa-header span { display: block; font-size: 11px; font-weight: 400; color: #bfe6db; margin-top: 2px; }
+  .chat {
+    height: 520px; overflow-y: auto; padding: 14px 12px;
+    display: flex; flex-direction: column; gap: 9px;
+    background: #efe7dd;
+  }
+  .bubble {
+    max-width: 78%; padding: 9px 11px; border-radius: 10px; font-size: 13.5px;
+    line-height: 1.45; white-space: pre-wrap;
+    box-shadow: 0 1px 1px rgba(0,0,0,.06);
+    animation: pop .18s ease both;
+  }
+  @keyframes pop { from { opacity: 0; transform: translateY(4px) scale(.98); } to { opacity: 1; transform: none; } }
+  .bot { background: white; align-self: flex-start; border-top-left-radius: 2px; }
+  .user { background: #d9fdd3; align-self: flex-end; border-top-right-radius: 2px; }
+  .quick-replies { display: flex; flex-wrap: wrap; gap: 7px; padding: 10px 12px; background: #f0ece4; border-top: 1px solid #ddd6cb; }
+  .quick-replies button {
+    background: white; border: 1.5px solid #25d366; color: #075e54; border-radius: 16px;
+    padding: 7px 13px; font-size: 12.5px; font-weight: 600; cursor: pointer;
+    transition: background .15s, transform .1s;
+  }
+  .quick-replies button:hover { background: #e6fff0; transform: translateY(-1px); }
+  .input-row { display: flex; gap: 8px; padding: 10px; background: #f0ece4; }
+  .input-row input { flex: 1; border: none; border-radius: 20px; padding: 10px 15px; font-size: 13.5px; outline: none; }
+  .input-row button {
+    background: #25d366; border: none; color: white; border-radius: 50%; width: 38px; height: 38px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(0,0,0,.2); transition: transform .1s;
+  }
+  .input-row button:hover { transform: scale(1.06); }
 </style>
 </head>
 <body>
 <div class="phone">
-  <div class="wa-header">Swartland Municipality
-    <span>Powered by Municipal Rail — sandbox number, mockup only</span>
+  <div class="wa-header">
+    <div class="wa-avatar">SM</div>
+    <div>Swartland Municipality
+      <span>Powered by Municipal Rail — sandbox number, mockup only</span>
+    </div>
   </div>
   <div class="chat" id="chat"></div>
   <div class="quick-replies" id="quick-replies"></div>
