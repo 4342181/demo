@@ -1,0 +1,7 @@
+fastapi==0.115.12
+uvicorn==0.34.3
+pydantic==2.11.5
+python-multipart
+# Optional — only needed for the upgrades, the app runs without them:
+#   stripe       (live payments instead of demo unlock)
+#   anthropic    (LLM-polished letters instead of the deterministic draft)

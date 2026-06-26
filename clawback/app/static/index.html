@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Clawback — get your money back</title>
+<meta name="description" content="Turn a 60-second form into a professional demand letter that cites the right consumer law for your country. Free preview, then unlock.">
+<style>
+  :root {
+    --bg:#0c1116; --panel:#141c24; --panel2:#1b2630; --line:#2a3744;
+    --ink:#eef4f8; --muted:#94a6b4; --accent:#19c37d; --accent2:#0f9d63;
+    --danger:#ff6b6b; --gold:#f5b740;
+    --radius:16px;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+         background:radial-gradient(1200px 600px at 80% -10%, #16303f 0%, var(--bg) 55%);
+         color:var(--ink); min-height:100vh; -webkit-font-smoothing:antialiased; }
+  a { color:var(--accent); }
+  .wrap { max-width:680px; margin:0 auto; padding:20px 16px 64px; }
+  header.top { display:flex; align-items:center; gap:10px; padding:6px 2px 18px; }
+  .logo { width:34px; height:34px; border-radius:9px; background:linear-gradient(135deg,var(--accent),var(--accent2));
+          display:flex; align-items:center; justify-content:center; font-size:20px; }
+  .brand { font-weight:800; font-size:20px; letter-spacing:-.02em; }
+  .tag { color:var(--muted); font-size:13px; margin-left:auto; text-align:right; }
+  .hero h1 { font-size:30px; line-height:1.12; letter-spacing:-.03em; margin:6px 0 10px; }
+  .hero h1 span { color:var(--accent); }
+  .hero p { color:var(--muted); font-size:15px; line-height:1.5; margin:0 0 18px; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+          padding:18px; margin-bottom:16px; box-shadow:0 10px 30px rgba(0,0,0,.25); }
+  .step-label { font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted);
+                font-weight:700; margin-bottom:10px; display:flex; align-items:center; gap:8px;}
+  .step-num { width:20px;height:20px;border-radius:50%;background:var(--accent);color:#04210f;
+              display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;}
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .scenario { text-align:left; background:var(--panel2); border:1px solid var(--line); color:var(--ink);
+              border-radius:12px; padding:12px; cursor:pointer; transition:.12s; }
+  .scenario:hover { border-color:var(--accent); transform:translateY(-1px); }
+  .scenario.active { border-color:var(--accent); background:#173127; }
+  .scenario b { display:block; font-size:14px; margin-bottom:3px; }
+  .scenario small { color:var(--muted); font-size:12px; line-height:1.3; }
+  label { display:block; font-size:13px; color:var(--muted); margin:12px 0 5px; font-weight:600; }
+  input, textarea, select {
+    width:100%; padding:11px 12px; background:var(--panel2); border:1px solid var(--line);
+    border-radius:10px; color:var(--ink); font-size:15px; font-family:inherit; }
+  input:focus, textarea:focus, select:focus { outline:none; border-color:var(--accent); }
+  textarea { min-height:84px; resize:vertical; }
+  .row2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .btn { width:100%; padding:14px; border:none; border-radius:12px; font-size:16px; font-weight:700;
+         cursor:pointer; background:var(--accent); color:#04210f; transition:.12s; }
+  .btn:hover { background:#1ed98c; }
+  .btn:disabled { opacity:.5; cursor:default; }
+  .btn.ghost { background:transparent; border:1px solid var(--line); color:var(--ink); }
+  .btn.gold { background:linear-gradient(135deg,var(--gold),#e09a14); color:#3a2600; }
+  .hidden { display:none !important; }
+  .muted { color:var(--muted); font-size:13px; }
+  .lever { background:#10231b; border:1px solid #1f5e43; border-radius:10px; padding:12px;
+           font-size:13px; color:#bdf0d6; line-height:1.45; margin:14px 0; }
+  .lever b { color:var(--accent); }
+  .letter { white-space:pre-wrap; font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;
+            font-size:13.5px; line-height:1.6; background:#0e1419; border:1px solid var(--line);
+            border-radius:12px; padding:16px; color:#dce8ef; }
+  .fade { position:relative; }
+  .fade::after { content:""; position:absolute; left:0; right:0; bottom:0; height:120px;
+                 background:linear-gradient(transparent, var(--panel)); pointer-events:none; }
+  .paywall { text-align:center; padding:6px 4px 2px; }
+  .price { font-size:34px; font-weight:800; letter-spacing:-.02em; }
+  .price small { font-size:14px; color:var(--muted); font-weight:600; }
+  .ticks { list-style:none; padding:0; margin:12px 0 16px; }
+  .ticks li { font-size:13.5px; color:var(--ink); padding:4px 0; }
+  .ticks li::before { content:"✓ "; color:var(--accent); font-weight:800; }
+  .msg { font-size:13.5px; padding:10px 12px; border-radius:10px; margin:12px 0; }
+  .msg.err { background:#2a1414; color:#ffb3b3; border:1px solid #5e2020; }
+  .msg.ok  { background:#10231b; color:#bdf0d6; border:1px solid #1f5e43; }
+  .actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; }
+  .demo-badge { display:inline-block; background:#332100; color:var(--gold); border:1px solid #5e4410;
+                font-size:11px; padding:2px 8px; border-radius:999px; font-weight:700; }
+  .spin { display:inline-block; width:15px;height:15px;border:2px solid rgba(4,33,15,.3);
+          border-top-color:#04210f;border-radius:50%;animation:s .7s linear infinite;vertical-align:-2px;}
+  @keyframes s { to { transform:rotate(360deg);} }
+  footer { color:var(--muted); font-size:12px; text-align:center; margin-top:8px; line-height:1.6;}
+  @media (max-width:520px){ .grid{grid-template-columns:1fr;} .hero h1{font-size:26px;} }
+  @media print { body{background:#fff;color:#000;} .noprint{display:none!important;}
+    .letter{border:none;color:#000;background:#fff;font-size:12px;} .wrap{max-width:100%;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top noprint">
+    <div class="logo">⟲</div>
+    <div class="brand">Clawback</div>
+    <div class="tag">Demand letters that<br>actually get refunds</div>
+  </header>
+
+  <section class="hero noprint">
+    <h1>Someone owes you money.<br><span>Let's get it back.</span></h1>
+    <p>Answer a few questions and Clawback writes a firm, professional demand letter
+       that cites the <b>right consumer law for your country</b> — with a deadline and an
+       escalation threat. See it free, then unlock to send.</p>
+  </section>
+
+  <!-- STEP 1: scenario -->
+  <div class="card noprint" id="card-scenario">
+    <div class="step-label"><span class="step-num">1</span> What happened?</div>
+    <div class="grid" id="scenario-grid"></div>
+  </div>
+
+  <!-- STEP 2: details -->
+  <div class="card noprint hidden" id="card-details">
+    <div class="step-label"><span class="step-num">2</span> The details</div>
+    <label>Where are you (which consumer law applies)?</label>
+    <select id="region"></select>
+    <div id="fields"></div>
+    <label>Anything else? (what happened, in your words — optional)</label>
+    <textarea id="facts" placeholder="e.g. I called twice and was promised a callback that never came."></textarea>
+    <div class="row2">
+      <div><label>Your name</label><input id="sender_name" placeholder="e.g. T. Ephraim"></div>
+      <div><label>Your email / phone</label><input id="sender_contact" placeholder="how they reply"></div>
+    </div>
+    <label>Give them how long to respond?</label>
+    <select id="deadline_days">
+      <option value="7">7 days (firm)</option>
+      <option value="14" selected>14 days (standard)</option>
+      <option value="21">21 days (lenient)</option>
+    </select>
+    <div id="form-msg"></div>
+    <button class="btn" id="preview-btn" style="margin-top:14px;">Write my letter — free preview</button>
+  </div>
+
+  <!-- STEP 3: preview + paywall -->
+  <div class="card noprint hidden" id="card-preview">
+    <div class="step-label"><span class="step-num">3</span> Your letter</div>
+    <div class="lever" id="lever"></div>
+    <div class="fade"><div class="letter" id="preview-text"></div></div>
+    <div class="paywall">
+      <p class="muted" id="hidden-note" style="margin:14px 0 6px;"></p>
+      <div class="price" id="price-tag">R49 <small>one-off</small></div>
+      <ul class="ticks">
+        <li>The complete, ready-to-send letter</li>
+        <li>The exact law/regulation that backs your claim</li>
+        <li>Copy, download, or print to PDF</li>
+      </ul>
+      <button class="btn gold" id="unlock-btn">Unlock my letter →</button>
+      <p class="muted" id="pay-mode-note" style="margin-top:10px;"></p>
+    </div>
+  </div>
+
+  <!-- STEP 4: unlocked -->
+  <div class="card hidden" id="card-full">
+    <div class="step-label noprint"><span class="step-num">✓</span> Unlocked — ready to send</div>
+    <div id="full-msg"></div>
+    <div class="letter" id="full-text"></div>
+    <div class="actions noprint">
+      <button class="btn" id="copy-btn">Copy text</button>
+      <button class="btn ghost" id="print-btn">Print / PDF</button>
+    </div>
+    <button class="btn ghost noprint" id="download-btn" style="margin-top:10px;">Download .txt</button>
+    <button class="btn ghost noprint" id="restart-btn" style="margin-top:10px;">Start another letter</button>
+  </div>
+
+  <footer class="noprint">
+    Clawback writes self-help letters from publicly available consumer-protection principles.
+    It is not a law firm and this is not legal advice.<br>© Clawback
+  </footer>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+let CONFIG = null, state = { scenario:null, region:"za" };
+
+function msg(el, text, kind){ el.innerHTML = text ? `<div class="msg ${kind}">${text}</div>` : ""; }
+
+async function boot(){
+  CONFIG = await (await fetch('/api/config')).json();
+  // scenarios
+  const grid = $('#scenario-grid');
+  grid.innerHTML = '';
+  for (const [key, s] of Object.entries(CONFIG.scenarios)){
+    const b = document.createElement('button');
+    b.className = 'scenario'; b.dataset.key = key;
+    b.innerHTML = `<b>${s.label}</b><small>${s.blurb}</small>`;
+    b.onclick = () => pickScenario(key);
+    grid.appendChild(b);
+  }
+  // regions
+  const reg = $('#region'); reg.innerHTML = '';
+  for (const [key, label] of Object.entries(CONFIG.regions)){
+    const o = document.createElement('option'); o.value = key; o.textContent = label;
+    if (key === 'za') o.selected = true;
+    reg.appendChild(o);
+  }
+  reg.onchange = () => state.region = reg.value;
+  $('#price-tag').innerHTML = `${CONFIG.price} <small>one-off</small>`;
+  if (!CONFIG.payments_live) $('#pay-mode-note').innerHTML =
+    '<span class="demo-badge">DEMO MODE</span> No card needed — payments aren\'t wired to live keys yet.';
+  // returning from a real Stripe checkout?
+  const paid = new URLSearchParams(location.search).get('paid');
+  if (paid && sessionStorage.getItem('cb_req')) resumeAfterPayment(paid);
+}
+
+function pickScenario(key){
+  state.scenario = key;
+  document.querySelectorAll('.scenario').forEach(el =>
+    el.classList.toggle('active', el.dataset.key === key));
+  // render fields
+  const wrap = $('#fields'); wrap.innerHTML = '';
+  for (const f of CONFIG.scenarios[key].fields){
+    const lab = document.createElement('label'); lab.textContent = f.label;
+    const inp = document.createElement('input'); inp.id = 'f_' + f.name;
+    inp.placeholder = f.placeholder || '';
+    wrap.appendChild(lab); wrap.appendChild(inp);
+  }
+  $('#card-details').classList.remove('hidden');
+  $('#card-details').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function collect(){
+  const req = {
+    scenario: state.scenario, region: $('#region').value,
+    facts: $('#facts').value, sender_name: $('#sender_name').value,
+    sender_contact: $('#sender_contact').value,
+    deadline_days: parseInt($('#deadline_days').value),
+  };
+  for (const f of CONFIG.scenarios[state.scenario].fields){
+    req[f.name] = ($('#f_' + f.name)||{}).value || '';
+  }
+  return req;
+}
+
+$('#preview-btn').onclick = async () => {
+  if (!state.scenario){ msg($('#form-msg'),'Pick what happened first.','err'); return; }
+  const btn = $('#preview-btn'); btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Writing…';
+  msg($('#form-msg'),'','');
+  try{
+    const req = collect();
+    sessionStorage.setItem('cb_req', JSON.stringify(req));
+    const r = await fetch('/api/preview', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(req)});
+    const d = await r.json();
+    $('#lever').innerHTML = `<b>Your legal lever:</b> ${d.lever_note}`;
+    $('#preview-text').textContent = d.preview;
+    $('#hidden-note').textContent = d.hidden_lines > 0
+      ? `+ ${d.hidden_lines} more lines including your demand, the ${state.region==='za'?'CPA':''} deadline of ${d.deadline}, and the escalation path.`
+      : '';
+    $('#card-preview').classList.remove('hidden');
+    $('#card-preview').scrollIntoView({behavior:'smooth', block:'start'});
+  }catch(e){ msg($('#form-msg'), 'Something went wrong. Try again.','err'); }
+  btn.disabled = false; btn.textContent = 'Write my letter — free preview';
+};
+
+$('#unlock-btn').onclick = async () => {
+  const btn = $('#unlock-btn'); btn.disabled = true; btn.innerHTML = '<span class="spin"></span> …';
+  try{
+    const req = JSON.parse(sessionStorage.getItem('cb_req'));
+    const r = await fetch('/api/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(req)});
+    const d = await r.json();
+    if (d.mode === 'stripe'){ location.href = d.checkout_url; return; }
+    // demo mode: we got a token, reveal immediately
+    await revealFull(req, d.token);
+  }catch(e){ btn.disabled=false; btn.textContent='Unlock my letter →'; }
+};
+
+async function resumeAfterPayment(sessionId){
+  const req = JSON.parse(sessionStorage.getItem('cb_req'));
+  // rebuild preview UI so the page isn't blank, then reveal
+  $('#card-scenario').classList.add('hidden');
+  await revealFull(req, sessionId);
+  history.replaceState({}, '', '/');
+}
+
+async function revealFull(req, token){
+  const r = await fetch('/api/full',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({...req, token})});
+  if (r.status === 402){ msg($('#full-msg'),'Payment not confirmed yet.','err');
+    $('#card-full').classList.remove('hidden'); return; }
+  const d = await r.json();
+  $('#card-preview').classList.add('hidden');
+  $('#full-text').textContent = d.body;
+  if (d.mode === 'llm') msg($('#full-msg'),'Polished and ready. Personalise the bracketed bits, then send.','ok');
+  else msg($('#full-msg'),'Ready to send. Personalise anything in [brackets] before sending.','ok');
+  $('#card-full').classList.remove('hidden');
+  $('#card-full').scrollIntoView({behavior:'smooth', block:'start'});
+  window._letter = d.body;
+}
+
+$('#copy-btn').onclick = async () => {
+  await navigator.clipboard.writeText(window._letter||'');
+  $('#copy-btn').textContent = 'Copied ✓'; setTimeout(()=>$('#copy-btn').textContent='Copy text',1500);
+};
+$('#print-btn').onclick = () => window.print();
+$('#download-btn').onclick = () => {
+  const blob = new Blob([window._letter||''], {type:'text/plain'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'demand-letter.txt'; a.click();
+};
+$('#restart-btn').onclick = () => location.href = '/';
+
+boot();
+</script>
+</body>
+</html>
