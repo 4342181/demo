@@ -20,6 +20,7 @@ import time
 import logging
 import secrets
 import threading
+from functools import lru_cache
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse
@@ -151,18 +152,26 @@ class GenerateRequest(BaseModel):
         return v
 
 
-@app.get("/api/config")
-def config():
-    """Drives the form: the scenarios, their fields, and the regions."""
+@lru_cache(maxsize=1)
+def _form_schema() -> dict:
+    """The scenarios/regions/fields never change at runtime, so build this once
+    instead of rebuilding it on every page load (config is the hottest read).
+    Cache-aside applied to our busiest endpoint — safe because it's immutable,
+    with no DB and no staleness. Payment flags below stay live (we never cache
+    payment state)."""
     return {
         "scenarios": {
             k: {"label": v["label"], "blurb": v["blurb"], "fields": v["fields"]}
             for k, v in levers.SCENARIOS.items()
         },
         "regions": {k: v["label"] for k, v in levers.REGIONS.items()},
-        "price": UNLOCK_PRICE,
-        "payments_live": bool(STRIPE_KEY),
     }
+
+
+@app.get("/api/config")
+def config():
+    """Drives the form: the scenarios, their fields, and the regions."""
+    return {**_form_schema(), "price": UNLOCK_PRICE, "payments_live": bool(STRIPE_KEY)}
 
 
 @app.post("/api/preview")
