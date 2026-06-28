@@ -115,6 +115,15 @@ def test_free_preview_never_reaches_the_expensive_ai():
         L.build = original
 
 
+def test_healthz_is_ok_and_not_rate_limited():
+    """Load-balancer probe must stay 200 even under a tight limit — it lives
+    outside /api/ so the rate limiter never touches it."""
+    m.RATE_LIMIT = 1
+    m._rate_hits.clear()
+    codes = {client.get("/healthz").status_code for _ in range(5)}
+    assert codes == {200}
+
+
 def test_preview_is_free_and_open():
     """The free hook works without any token (and is deterministic/fast)."""
     r = client.post("/api/preview", json=BASE)

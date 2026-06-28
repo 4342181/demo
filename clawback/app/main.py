@@ -263,6 +263,16 @@ def full(req: GenerateRequest):
 
 # ---- Static app (served last so /api/* wins) -------------------------------
 
+@app.get("/healthz")
+def healthz():
+    """Liveness/readiness probe for load balancers and orchestrators (the
+    healthy/unhealthy check that lets an LB route around a dead instance).
+    Deliberately outside /api/ so the rate limiter can't 429 the probe and
+    make the balancer wrongly mark a healthy instance as down. Cheap and
+    unauthenticated by design."""
+    return {"status": "ok"}
+
+
 @app.get("/")
 def index():
     return FileResponse(os.path.join(STATIC_DIR, "index.html"))

@@ -65,6 +65,14 @@ What's in place, and what production still needs:
 - **Deploy behind HTTPS.** Terminate TLS at your host/reverse proxy; set
   `CLAWBACK_BASE_URL` to the https origin so Stripe redirects stay secure.
 
+**Scaling.** The app is stateless (letters are generated per-request), so it
+runs fine behind a load balancer — with one caveat: the rate-limit counter and
+unlock/demo tokens are in-process, so for *multiple* instances move them to a
+shared store (Redis). A `GET /healthz` endpoint (outside `/api/`, so it's never
+rate-limited) is provided for load-balancer/orchestrator health checks. There's
+no file storage to offload (no object store needed) and no database to cache
+beyond the already-memoized static config.
+
 These are locked in by an automated regression suite — run `python -m pytest`
 from `clawback/` (covers rate limiting, input/enum validation, the paid-token
 gate + single use, sanitized errors, and no secrets in the frontend bundle).
