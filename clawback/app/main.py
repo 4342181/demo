@@ -24,7 +24,7 @@ import threading
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from . import letters, levers
 
@@ -116,6 +116,22 @@ class GenerateRequest(BaseModel):
     sender_contact: str = Field("", max_length=160)
     deadline_days: int = Field(14, ge=1, le=90)
     token: str | None = Field(None, max_length=200)  # required only for /api/full
+
+    # Whitelist the enums server-side: reject unexpected values with a 422
+    # rather than silently coercing them to a default. "Correct AND expected."
+    @field_validator("scenario")
+    @classmethod
+    def _known_scenario(cls, v: str) -> str:
+        if v not in levers.SCENARIOS:
+            raise ValueError("unknown scenario")
+        return v
+
+    @field_validator("region")
+    @classmethod
+    def _known_region(cls, v: str) -> str:
+        if v not in levers.REGIONS:
+            raise ValueError("unknown region")
+        return v
 
 
 def _to_inputs(req: GenerateRequest) -> letters.LetterInputs:

@@ -30,8 +30,11 @@ URL/body to imply authorization) and revisit this matrix.
    only ever calls our own `/api/*`.
 2. **Every `/api/*` endpoint is rate-limited.** Per-IP (not per-user — callers
    are anonymous). New endpoints inherit the middleware; don't bypass it.
-3. **Validate all input.** Every request field is length-capped and numeric
-   fields range-checked via pydantic `Field(...)`. Add caps for any new field.
+3. **Validate all input, server-side.** Every request field is length-capped,
+   numeric fields range-checked, and enum fields (`scenario`, `region`)
+   whitelisted against the known sets — unexpected values are rejected (422),
+   never silently coerced. Add the same for any new field; never trust the
+   client to send only valid values.
 4. **Never leak internals in responses.** No raw exceptions, stack traces, or
    dependency names to clients. Log server-side; return a generic message. The
    catch-all handler enforces this — keep it.
