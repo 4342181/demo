@@ -64,6 +64,10 @@ What's in place, and what production still needs:
 - **Deploy behind HTTPS.** Terminate TLS at your host/reverse proxy; set
   `CLAWBACK_BASE_URL` to the https origin so Stripe redirects stay secure.
 
+These are locked in by an automated regression suite — run `python -m pytest`
+from `clawback/` (covers rate limiting, input/enum validation, the paid-token
+gate + single use, sanitized errors, and no secrets in the frontend bundle).
+
 ## Coverage
 **Scenarios:** delayed/cancelled flight · bank fee / unauthorised charge ·
 faulty product · trapped subscription · accommodation not as described ·
