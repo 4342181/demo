@@ -134,23 +134,6 @@ class GenerateRequest(BaseModel):
         return v
 
 
-def _to_inputs(req: GenerateRequest) -> letters.LetterInputs:
-    return letters.LetterInputs(
-        scenario=req.scenario,
-        region=req.region,
-        company=req.company,
-        reference=req.reference,
-        date=req.date,
-        amount=req.amount,
-        route=req.route,
-        product=req.product,
-        facts=req.facts,
-        sender_name=req.sender_name,
-        sender_contact=req.sender_contact,
-        deadline_days=req.deadline_days,
-    )
-
-
 @app.get("/api/config")
 def config():
     """Drives the form: the scenarios, their fields, and the regions."""
@@ -170,7 +153,7 @@ def preview(req: GenerateRequest):
     # Preview is free and shows only the opening lines, so generate the fast
     # deterministic draft — never pay the LLM's latency or cost to render a
     # teaser. LLM polish is reserved for the paid full letter (/api/full).
-    result = letters.build_deterministic(_to_inputs(req))
+    result = letters.build_deterministic(req)
     prev = letters.make_preview(result["body"])
     return {
         "subject": result["subject"],
@@ -242,7 +225,7 @@ def full(req: GenerateRequest):
         raise HTTPException(402, "This unlock has already been used. Please pay to unlock another letter.")
     if not _token_is_paid(req.token):
         raise HTTPException(402, "Payment required to unlock the full letter.")
-    result = letters.build(_to_inputs(req))
+    result = letters.build(req)
     _USED_TOKENS.add(req.token)  # spend the token: one payment, one letter
     return {
         "subject": result["subject"],

@@ -24,49 +24,38 @@ from __future__ import annotations
 
 import os
 import datetime
-from dataclasses import dataclass, field
 
 from . import levers
 
+# `inp` throughout is any object carrying the request fields — in practice the
+# pydantic GenerateRequest from app.main. We duck-type it rather than keep a
+# second parallel dataclass in sync with the schema.
 
-@dataclass
-class LetterInputs:
-    scenario: str
-    region: str
-    company: str = ""
-    reference: str = ""
-    date: str = ""
-    amount: str = ""
-    route: str = ""
-    product: str = ""
-    facts: str = ""           # free-text "what happened"
-    sender_name: str = ""
-    sender_contact: str = ""
-    deadline_days: int = 14
 
-    extras: dict = field(default_factory=dict)
+def _fmt(d: datetime.date) -> str:
+    # "26 June 2026" — no leading zero, cross-platform (avoids %-d / %#d).
+    return f"{d.day} {d:%B %Y}"
 
 
 def _today() -> str:
-    return datetime.date.today().strftime("%-d %B %Y") if os.name != "nt" else datetime.date.today().strftime("%d %B %Y")
+    return _fmt(datetime.date.today())
 
 
 def _deadline_date(days: int) -> str:
-    d = datetime.date.today() + datetime.timedelta(days=max(1, days))
-    return d.strftime("%-d %B %Y") if os.name != "nt" else d.strftime("%d %B %Y")
+    return _fmt(datetime.date.today() + datetime.timedelta(days=max(1, days)))
 
 
 def _scenario_meta(key: str) -> dict:
     return levers.SCENARIOS.get(key, levers.SCENARIOS["other"])
 
 
-def build_subject(inp: LetterInputs) -> str:
+def build_subject(inp) -> str:
     meta = _scenario_meta(inp.scenario)
     ref = f" (Ref: {inp.reference})" if inp.reference else ""
     return f"Formal demand: {meta['label'].lower()}{ref}"
 
 
-def _facts_paragraph(inp: LetterInputs) -> str:
+def _facts_paragraph(inp) -> str:
     """Build the 'here is what happened' paragraph from structured fields,
     falling back to the user's free text where given."""
     bits = []
@@ -94,7 +83,7 @@ def _facts_paragraph(inp: LetterInputs) -> str:
     return " ".join(bits)
 
 
-def build_deterministic(inp: LetterInputs) -> dict:
+def build_deterministic(inp) -> dict:
     meta = _scenario_meta(inp.scenario)
     lever = levers.lever_for(inp.region, inp.scenario)
     escalation = levers.escalation_for(inp.region)
@@ -156,7 +145,7 @@ _POLISH_SYSTEM = (
 )
 
 
-def build(inp: LetterInputs) -> dict:
+def build(inp) -> dict:
     """Public entry point. Deterministic by default; LLM-polished if a key is
     configured and the call succeeds."""
     draft = build_deterministic(inp)
