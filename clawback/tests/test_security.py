@@ -97,6 +97,24 @@ def test_errors_do_not_leak_internals():
         assert leak not in detail
 
 
+def test_free_preview_never_reaches_the_expensive_ai():
+    """Invariant 5 (economic): the costly LLM path (letters.build) must be
+    unreachable without payment. If preview ever called build() instead of
+    build_deterministic(), the patched build below would blow up — so this
+    guards against anyone regressing the free path into a free AI endpoint."""
+    import app.letters as L
+
+    def _boom(*a, **k):
+        raise AssertionError("LLM path reached on the free preview endpoint")
+
+    original = L.build
+    L.build = _boom
+    try:
+        assert client.post("/api/preview", json=BASE).status_code == 200
+    finally:
+        L.build = original
+
+
 def test_preview_is_free_and_open():
     """The free hook works without any token (and is deterministic/fast)."""
     r = client.post("/api/preview", json=BASE)
