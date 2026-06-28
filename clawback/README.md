@@ -51,8 +51,13 @@ What's in place, and what production still needs:
   `deadline_days` range-checked), so oversized payloads can't exhaust memory
   or inflate LLM cost. No SQL injection surface (no DB); user text renders via
   `textContent`, not `innerHTML`.
-- **Access control.** The app is intentionally anonymous (no accounts), so the
-  meaningful gate is the paid-token check on `/api/full` — not OAuth/RBAC.
+- **Access control.** The app is intentionally anonymous (no accounts) and
+  stores no per-user data, so there's no IDOR / row-level-security surface (no
+  `/user/{id}`-style endpoint to swap an ID on). The meaningful gate is the
+  paid-token check on `/api/full` — not OAuth/RBAC.
+- **Single-use unlock tokens.** A paid token is spent on first use, so it can't
+  be replayed (or shared/leaked) to mint unlimited free letters from one
+  payment.
 - **No leaky errors.** Raw exceptions/stack traces are never returned to
   clients — a catch-all handler logs the real cause server-side and returns a
   generic message, so errors don't hand attackers a map of the internals.

@@ -92,6 +92,12 @@ STRIPE_KEY = os.environ.get("STRIPE_SECRET_KEY")
 # demo; a real deployment would verify Stripe sessions statelessly (see below).
 _DEMO_TOKENS: set[str] = set()
 
+# Tokens already spent on an unlock. One payment = one letter, so a paid token
+# is single-use: this stops anyone replaying the same token (or a leaked one)
+# to mint unlimited letters from a single payment. Per-process like the rest;
+# move to Redis/DB for multi-worker production.
+_USED_TOKENS: set[str] = set()
+
 
 class GenerateRequest(BaseModel):
     # Every field is length-capped so a malicious/huge payload can't exhaust
@@ -214,10 +220,14 @@ def _token_is_paid(token: str | None) -> bool:
 
 @app.post("/api/full")
 def full(req: GenerateRequest):
-    """The paid payload: the complete letter. Requires a paid/demo token."""
+    """The paid payload: the complete letter. Requires a paid/demo token,
+    which is single-use — it can't be replayed for a second free letter."""
+    if req.token in _USED_TOKENS:
+        raise HTTPException(402, "This unlock has already been used. Please pay to unlock another letter.")
     if not _token_is_paid(req.token):
         raise HTTPException(402, "Payment required to unlock the full letter.")
     result = letters.build(_to_inputs(req))
+    _USED_TOKENS.add(req.token)  # spend the token: one payment, one letter
     return {
         "subject": result["subject"],
         "body": result["body"],
