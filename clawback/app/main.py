@@ -17,6 +17,7 @@ free) while still converting at the moment of peak desire.
 """
 import os
 import time
+import logging
 import secrets
 import threading
 
@@ -27,7 +28,20 @@ from pydantic import BaseModel, Field
 
 from . import letters, levers
 
+logger = logging.getLogger("clawback")
+
 app = FastAPI(title="Clawback", version="1.0.0")
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception(request: Request, exc: Exception):
+    # Never leak raw errors/stack traces to clients — that hands an attacker a
+    # map of your internals. Log the real cause server-side, return a generic
+    # message. (HTTPExceptions we raise deliberately keep their own clean text.)
+    logger.exception("Unhandled error on %s", request.url.path)
+    return JSONResponse(
+        {"detail": "Something went wrong. Please try again."}, status_code=500
+    )
 
 # ---- Rate limiting ---------------------------------------------------------
 # Wide-open API endpoints are how a vibe-coded app earns a surprise $30k bill:
@@ -174,8 +188,11 @@ def checkout(req: GenerateRequest):
             cancel_url=base + "/?canceled=1",
         )
         return {"mode": "stripe", "checkout_url": session.url}
-    except Exception as exc:
-        raise HTTPException(502, f"Could not start checkout: {exc}")
+    except Exception:
+        # Log the real Stripe error for ourselves; tell the client nothing
+        # about our internals.
+        logger.exception("Stripe checkout failed")
+        raise HTTPException(502, "Could not start checkout. Please try again.")
 
 
 def _token_is_paid(token: str | None) -> bool:

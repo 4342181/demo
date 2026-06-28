@@ -53,6 +53,9 @@ What's in place, and what production still needs:
   `textContent`, not `innerHTML`.
 - **Access control.** The app is intentionally anonymous (no accounts), so the
   meaningful gate is the paid-token check on `/api/full` — not OAuth/RBAC.
+- **No leaky errors.** Raw exceptions/stack traces are never returned to
+  clients — a catch-all handler logs the real cause server-side and returns a
+  generic message, so errors don't hand attackers a map of the internals.
 - **Deploy behind HTTPS.** Terminate TLS at your host/reverse proxy; set
   `CLAWBACK_BASE_URL` to the https origin so Stripe redirects stay secure.
 
