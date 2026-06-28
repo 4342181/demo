@@ -90,7 +90,10 @@ def config():
 
 @app.post("/api/preview")
 def preview(req: GenerateRequest):
-    result = letters.build(_to_inputs(req))
+    # Preview is free and shows only the opening lines, so generate the fast
+    # deterministic draft — never pay the LLM's latency or cost to render a
+    # teaser. LLM polish is reserved for the paid full letter (/api/full).
+    result = letters.build_deterministic(_to_inputs(req))
     prev = letters.make_preview(result["body"])
     return {
         "subject": result["subject"],

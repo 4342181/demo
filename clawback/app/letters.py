@@ -168,7 +168,11 @@ def build(inp: LetterInputs) -> dict:
     try:
         import anthropic  # imported lazily so the app runs without the dep
 
-        client = anthropic.Anthropic(api_key=api_key)
+        # Hard timeout so a slow/hung LLM call can't freeze the request worker
+        # — we'd rather fall back to the (already strong) deterministic draft
+        # than make the user wait. Tunable via CLAWBACK_LLM_TIMEOUT.
+        timeout = float(os.environ.get("CLAWBACK_LLM_TIMEOUT", "20"))
+        client = anthropic.Anthropic(api_key=api_key, timeout=timeout)
         msg = client.messages.create(
             model=os.environ.get("CLAWBACK_MODEL", "claude-opus-4-8"),
             max_tokens=1200,
