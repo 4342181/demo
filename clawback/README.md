@@ -44,9 +44,10 @@ What's in place, and what production still needs:
 
 - **No secrets in the frontend.** Stripe/Anthropic keys live in server-side env
   vars only; the browser holds none and talks only to our backend.
-- **Rate limiting.** Per-IP fixed-window limiter on `/api/*`
-  (`CLAWBACK_RATE_LIMIT`/`CLAWBACK_RATE_WINDOW`, default 60/min → 429). It's
-  per-process — move it to Redis for a multi-worker deployment.
+- **Rate limiting.** Per-IP **sliding-window** limiter on `/api/*`
+  (`CLAWBACK_RATE_LIMIT`/`CLAWBACK_RATE_WINDOW`, default 60/min → 429) — the
+  sliding window avoids the fixed-window boundary burst (2×limit across a window
+  edge). It's per-process — move it to Redis for a multi-worker deployment.
 - **Input validation.** Every request field is length-capped (and
   `deadline_days` range-checked), so oversized payloads can't exhaust memory
   or inflate LLM cost. No SQL injection surface (no DB); user text renders via

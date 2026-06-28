@@ -52,7 +52,28 @@ async def unhandled_exception(request: Request, exc: Exception):
 RATE_LIMIT = int(os.environ.get("CLAWBACK_RATE_LIMIT", "60"))     # requests…
 RATE_WINDOW = int(os.environ.get("CLAWBACK_RATE_WINDOW", "60"))   # …per window (s)
 _rate_lock = threading.Lock()
-_rate_hits: dict[str, list] = {}  # ip -> [window_start_ts, count]
+# Sliding-window counter: ip -> [window_index, count_this_window, count_prev_window].
+# A plain fixed window lets a client burst the full limit at the end of one
+# window and again at the start of the next (2×limit in seconds). Weighting the
+# previous window's count by how much it still overlaps "now" smooths that
+# boundary out — with just two counters per IP (cheap, in-process).
+_rate_hits: dict[str, list] = {}
+
+
+def _rate_check(ip: str, now: float) -> bool:
+    """True if the request is allowed; records it. Sliding-window counter."""
+    window = int(now // RATE_WINDOW)
+    weight = (RATE_WINDOW - (now - window * RATE_WINDOW)) / RATE_WINDOW  # 1.0→0 across window
+    entry = _rate_hits.get(ip)
+    if entry is None or entry[0] < window - 1:        # no usable history
+        _rate_hits[ip] = [window, 1, 0]
+        return True
+    if entry[0] == window - 1:                        # advanced one window: roll current→prev
+        entry[0], entry[1], entry[2] = window, 0, entry[1]
+    if entry[1] + entry[2] * weight >= RATE_LIMIT:    # weighted estimate over the sliding window
+        return False
+    entry[1] += 1
+    return True
 
 
 @app.middleware("http")
@@ -61,22 +82,18 @@ async def rate_limit(request: Request, call_next):
         ip = request.client.host if request.client else "unknown"
         now = time.time()
         with _rate_lock:
-            entry = _rate_hits.get(ip)
-            if entry is None or now - entry[0] >= RATE_WINDOW:
-                _rate_hits[ip] = [now, 1]
-            else:
-                entry[1] += 1
-                if entry[1] > RATE_LIMIT:
-                    retry = max(1, int(RATE_WINDOW - (now - entry[0])))
-                    return JSONResponse(
-                        {"detail": "Too many requests — please slow down."},
-                        status_code=429,
-                        headers={"Retry-After": str(retry)},
-                    )
-            # Bound memory: prune stale IPs so the dict can't grow forever.
-            if len(_rate_hits) > 10000:
-                for k in [k for k, v in _rate_hits.items() if now - v[0] >= RATE_WINDOW]:
+            allowed = _rate_check(ip, now)
+            if len(_rate_hits) > 10000:               # bound memory: drop stale IPs
+                cutoff = int(now // RATE_WINDOW) - 1
+                for k in [k for k, v in _rate_hits.items() if v[0] < cutoff]:
                     _rate_hits.pop(k, None)
+        if not allowed:
+            retry = max(1, int(RATE_WINDOW - (now % RATE_WINDOW)))
+            return JSONResponse(
+                {"detail": "Too many requests — please slow down."},
+                status_code=429,
+                headers={"Retry-After": str(retry)},
+            )
     return await call_next(request)
 
 HERE = os.path.dirname(__file__)

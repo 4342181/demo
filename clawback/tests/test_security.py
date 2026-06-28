@@ -42,6 +42,23 @@ def test_rate_limiting_trips():
     assert 429 in codes
 
 
+def test_sliding_window_blocks_boundary_burst():
+    """Invariant 2: a fixed window would allow 2×limit across a window edge;
+    the sliding-window counter must not."""
+    m.RATE_LIMIT = 100
+    W = m.RATE_WINDOW
+    m._rate_hits.clear()
+    # Fill the limit at the very end of window N…
+    t_end = 1000 * W + (W - 0.001)
+    allowed_end = sum(m._rate_check("9.9.9.9", t_end) for _ in range(100))
+    # …then try again at the very start of window N+1.
+    t_start = 1001 * W + 0.001
+    allowed_start = sum(m._rate_check("9.9.9.9", t_start) for _ in range(100))
+    assert allowed_end == 100            # the first window's budget is usable
+    assert allowed_start < 100           # but the boundary burst is throttled
+    assert allowed_end + allowed_start <= 100 + 5  # ≈ one window's worth, not two
+
+
 def test_length_cap_rejected():
     """Invariant 3: oversized input is rejected, not processed."""
     assert client.post("/api/preview", json={**BASE, "facts": "x" * 5000}).status_code == 422
