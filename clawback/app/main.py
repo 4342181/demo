@@ -25,13 +25,36 @@ from functools import lru_cache
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.gzip import GZipMiddleware
 from pydantic import BaseModel, Field, field_validator
 
 from . import letters, levers
 
 logger = logging.getLogger("clawback")
+logger.setLevel(logging.INFO)
 
 app = FastAPI(title="Clawback", version="1.0.0")
+
+# Web performance: compress responses (the ~20KB HTML page, JSON) so they reach
+# the user faster. Dependency-free (ships with Starlette). The frontend is
+# otherwise already a single self-contained file with no external requests.
+app.add_middleware(GZipMiddleware, minimum_size=500)
+
+
+@app.middleware("http")
+async def access_log(request: Request, call_next):
+    # Observability: one structured line per request — method, path, status,
+    # latency. Deliberately logs NO request body or query content: letters
+    # carry personal grievance details and must never land in logs.
+    start = time.time()
+    response = await call_next(request)
+    if request.url.path != "/healthz":  # skip the LB probe to keep logs useful
+        logger.info(
+            "%s %s -> %s %.1fms",
+            request.method, request.url.path, response.status_code,
+            (time.time() - start) * 1000,
+        )
+    return response
 
 
 @app.exception_handler(Exception)

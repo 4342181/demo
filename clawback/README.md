@@ -65,6 +65,13 @@ What's in place, and what production still needs:
 - **Deploy behind HTTPS.** Terminate TLS at your host/reverse proxy; set
   `CLAWBACK_BASE_URL` to the https origin so Stripe redirects stay secure.
 
+**Observability & performance.** Every request is access-logged (method, path,
+status, latency) — **metadata only; bodies are never logged**, since letters
+contain personal details. Responses are gzip-compressed, and the frontend is a
+single self-contained file with no external requests, so it loads fast. Heavy
+observability stacks (Prometheus/Datadog/Jaeger) are deliberately omitted as
+overkill until there's real traffic.
+
 **Scaling.** The app is stateless (letters are generated per-request), so it
 runs fine behind a load balancer — with one caveat: the rate-limit counter and
 unlock/demo tokens are in-process, so for *multiple* instances move them to a
