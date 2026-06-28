@@ -38,6 +38,24 @@ The letter content never depends on payment — the paywall only reveals the
 full text, so the product is honest (most of the letter is visible free) while
 still converting at the moment of peak desire.
 
+## Security
+
+What's in place, and what production still needs:
+
+- **No secrets in the frontend.** Stripe/Anthropic keys live in server-side env
+  vars only; the browser holds none and talks only to our backend.
+- **Rate limiting.** Per-IP fixed-window limiter on `/api/*`
+  (`CLAWBACK_RATE_LIMIT`/`CLAWBACK_RATE_WINDOW`, default 60/min → 429). It's
+  per-process — move it to Redis for a multi-worker deployment.
+- **Input validation.** Every request field is length-capped (and
+  `deadline_days` range-checked), so oversized payloads can't exhaust memory
+  or inflate LLM cost. No SQL injection surface (no DB); user text renders via
+  `textContent`, not `innerHTML`.
+- **Access control.** The app is intentionally anonymous (no accounts), so the
+  meaningful gate is the paid-token check on `/api/full` — not OAuth/RBAC.
+- **Deploy behind HTTPS.** Terminate TLS at your host/reverse proxy; set
+  `CLAWBACK_BASE_URL` to the https origin so Stripe redirects stay secure.
+
 ## Coverage
 **Scenarios:** delayed/cancelled flight · bank fee / unauthorised charge ·
 faulty product · trapped subscription · accommodation not as described ·

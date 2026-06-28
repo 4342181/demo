@@ -16,16 +16,54 @@ revealing the full text, so the product is honest (you can read most of it
 free) while still converting at the moment of peak desire.
 """
 import os
+import time
 import secrets
+import threading
 
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from . import letters, levers
 
 app = FastAPI(title="Clawback", version="1.0.0")
+
+# ---- Rate limiting ---------------------------------------------------------
+# Wide-open API endpoints are how a vibe-coded app earns a surprise $30k bill:
+# anyone can hammer /api/preview or /api/checkout and run up cost or take the
+# server down. This is a lightweight, dependency-free per-IP fixed-window
+# limiter. It's per-process (fine for one worker / a demo); a multi-worker
+# production deployment should move this to a shared store like Redis.
+RATE_LIMIT = int(os.environ.get("CLAWBACK_RATE_LIMIT", "60"))     # requests…
+RATE_WINDOW = int(os.environ.get("CLAWBACK_RATE_WINDOW", "60"))   # …per window (s)
+_rate_lock = threading.Lock()
+_rate_hits: dict[str, list] = {}  # ip -> [window_start_ts, count]
+
+
+@app.middleware("http")
+async def rate_limit(request: Request, call_next):
+    if request.url.path.startswith("/api/"):
+        ip = request.client.host if request.client else "unknown"
+        now = time.time()
+        with _rate_lock:
+            entry = _rate_hits.get(ip)
+            if entry is None or now - entry[0] >= RATE_WINDOW:
+                _rate_hits[ip] = [now, 1]
+            else:
+                entry[1] += 1
+                if entry[1] > RATE_LIMIT:
+                    retry = max(1, int(RATE_WINDOW - (now - entry[0])))
+                    return JSONResponse(
+                        {"detail": "Too many requests — please slow down."},
+                        status_code=429,
+                        headers={"Retry-After": str(retry)},
+                    )
+            # Bound memory: prune stale IPs so the dict can't grow forever.
+            if len(_rate_hits) > 10000:
+                for k in [k for k, v in _rate_hits.items() if now - v[0] >= RATE_WINDOW]:
+                    _rate_hits.pop(k, None)
+    return await call_next(request)
 
 HERE = os.path.dirname(__file__)
 STATIC_DIR = os.path.join(HERE, "static")
@@ -42,19 +80,22 @@ _DEMO_TOKENS: set[str] = set()
 
 
 class GenerateRequest(BaseModel):
-    scenario: str
-    region: str
-    company: str = ""
-    reference: str = ""
-    date: str = ""
-    amount: str = ""
-    route: str = ""
-    product: str = ""
-    facts: str = ""
-    sender_name: str = ""
-    sender_contact: str = ""
-    deadline_days: int = 14
-    token: str | None = None  # required only for /api/full
+    # Every field is length-capped so a malicious/huge payload can't exhaust
+    # memory or inflate LLM token cost. Pydantic rejects over-limit input with
+    # a 422 before it reaches our code — input validation as the first gate.
+    scenario: str = Field(max_length=40)
+    region: str = Field(max_length=12)
+    company: str = Field("", max_length=200)
+    reference: str = Field("", max_length=200)
+    date: str = Field("", max_length=80)
+    amount: str = Field("", max_length=80)
+    route: str = Field("", max_length=200)
+    product: str = Field("", max_length=200)
+    facts: str = Field("", max_length=2000)
+    sender_name: str = Field("", max_length=120)
+    sender_contact: str = Field("", max_length=160)
+    deadline_days: int = Field(14, ge=1, le=90)
+    token: str | None = Field(None, max_length=200)  # required only for /api/full
 
 
 def _to_inputs(req: GenerateRequest) -> letters.LetterInputs:
