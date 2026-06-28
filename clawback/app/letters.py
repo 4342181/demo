@@ -23,7 +23,9 @@ path is genuinely good and not a stub:
 from __future__ import annotations
 
 import os
+import time
 import datetime
+import threading
 
 from . import levers
 
@@ -133,6 +135,36 @@ Yours faithfully,
 
 # ---- Optional LLM polish ---------------------------------------------------
 
+# Circuit breaker for the LLM call. The timeout below already bounds a single
+# slow call, but if Anthropic is *down*, every request would still wait out the
+# full timeout before falling back. The breaker stops that: after N consecutive
+# failures it "opens" and requests skip the LLM entirely (instant deterministic
+# letter) for a cooldown; the first call after the cooldown is a half-open trial
+# that closes the breaker on success. Tiny, in-process, dependency-free.
+_LLM_FAIL_THRESHOLD = int(os.environ.get("CLAWBACK_LLM_FAIL_THRESHOLD", "3"))
+_LLM_COOLDOWN = float(os.environ.get("CLAWBACK_LLM_COOLDOWN", "60"))
+_breaker_lock = threading.Lock()
+_llm_failures = 0
+_llm_open_until = 0.0
+
+
+def _breaker_allows() -> bool:
+    with _breaker_lock:
+        return time.time() >= _llm_open_until
+
+
+def _breaker_record(ok: bool) -> None:
+    global _llm_failures, _llm_open_until
+    with _breaker_lock:
+        if ok:
+            _llm_failures = 0
+            _llm_open_until = 0.0
+        else:
+            _llm_failures += 1
+            if _llm_failures >= _LLM_FAIL_THRESHOLD:
+                _llm_open_until = time.time() + _LLM_COOLDOWN
+
+
 _POLISH_SYSTEM = (
     "You are an expert consumer-rights advocate and a sharp business writer. "
     "You will be given a draft demand letter. Rewrite it so it is tighter, "
@@ -151,7 +183,9 @@ def build(inp) -> dict:
     draft = build_deterministic(inp)
 
     api_key = os.environ.get("ANTHROPIC_API_KEY")
-    if not api_key:
+    if not api_key or not _breaker_allows():
+        # No key, or the breaker is open after recent failures → don't even try
+        # the LLM; return the strong deterministic draft instantly.
         return draft
 
     try:
@@ -174,10 +208,11 @@ def build(inp) -> dict:
         if polished:
             draft["body"] = polished
             draft["mode"] = "llm"
+        _breaker_record(True)   # API responded → close the breaker
     except Exception:
-        # Any failure (no network, bad key, rate limit) → keep the strong
-        # deterministic draft. The user still gets a sendable letter.
-        pass
+        # Any failure (no network, bad key, rate limit) → record it (may open
+        # the breaker) and keep the deterministic draft. Still a sendable letter.
+        _breaker_record(False)
 
     return draft
 

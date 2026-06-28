@@ -124,6 +124,22 @@ def test_healthz_is_ok_and_not_rate_limited():
     assert codes == {200}
 
 
+def test_llm_circuit_breaker_state_machine():
+    """Resilience: repeated LLM failures open the breaker (so we stop waiting
+    out the timeout on every request); a later success closes it again."""
+    import app.letters as L
+    L._llm_failures = 0
+    L._llm_open_until = 0.0
+    assert L._breaker_allows() is True
+    for _ in range(L._LLM_FAIL_THRESHOLD):
+        L._breaker_record(False)
+    assert L._breaker_allows() is False          # opened after N failures
+    L._llm_open_until = 0.0                       # simulate cooldown elapsed → half-open
+    assert L._breaker_allows() is True
+    L._breaker_record(True)                       # success closes it
+    assert L._llm_failures == 0 and L._breaker_allows() is True
+
+
 def test_preview_is_free_and_open():
     """The free hook works without any token (and is deterministic/fast)."""
     r = client.post("/api/preview", json=BASE)
