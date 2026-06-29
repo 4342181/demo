@@ -140,6 +140,14 @@ def test_llm_circuit_breaker_state_machine():
     assert L._llm_failures == 0 and L._breaker_allows() is True
 
 
+def test_analytics_events_validated_and_carry_no_pii():
+    """Analytics accepts only whitelisted funnel events, and the schema has no
+    free-text field — so personal data physically can't be captured."""
+    assert client.post("/api/event", json={"name": "preview_generated", "scenario": "flight"}).status_code == 200
+    assert client.post("/api/event", json={"name": "exfiltrate"}).status_code == 422
+    assert set(m.EventIn.model_fields) <= {"name", "scenario", "region"}
+
+
 def test_preview_is_free_and_open():
     """The free hook works without any token (and is deterministic/fast)."""
     r = client.post("/api/preview", json=BASE)

@@ -21,6 +21,7 @@ import logging
 import secrets
 import threading
 from functools import lru_cache
+from collections import Counter
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse
@@ -189,6 +190,39 @@ def _form_schema() -> dict:
         },
         "regions": {k: v["label"] for k, v in levers.REGIONS.items()},
     }
+
+
+# ---- Product analytics (first-party, privacy-safe) -------------------------
+# Funnel events only — no PII, no letter content. We keep this first-party
+# rather than piping user behaviour to a third party (Amplitude/PostHog),
+# because the inputs are sensitive. The schema below has no free-text field by
+# design, so personal data physically can't be captured here.
+ALLOWED_EVENTS = {
+    "view", "scenario_selected", "preview_generated", "unlock_clicked", "letter_unlocked",
+}
+_event_counts: Counter = Counter()
+
+
+class EventIn(BaseModel):
+    name: str = Field(max_length=40)
+    scenario: str | None = Field(None, max_length=40)   # category label only
+    region: str | None = Field(None, max_length=12)     # category label only
+
+    @field_validator("name")
+    @classmethod
+    def _known_event(cls, v: str) -> str:
+        if v not in ALLOWED_EVENTS:
+            raise ValueError("unknown event")
+        return v
+
+
+@app.post("/api/event")
+def track_event(ev: EventIn):
+    """Record one funnel step so we can see where users drop off (landed →
+    scenario → preview → unlock-click → unlocked). No PII is stored."""
+    _event_counts[ev.name] += 1
+    logger.info("EVENT %s scenario=%s region=%s", ev.name, ev.scenario or "-", ev.region or "-")
+    return {"ok": True}
 
 
 @app.get("/api/config")

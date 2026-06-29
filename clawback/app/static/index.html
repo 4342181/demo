@@ -181,6 +181,15 @@ let CONFIG = null, state = { scenario:null, region:"za" };
 
 function msg(el, text, kind){ el.innerHTML = text ? `<div class="msg ${kind}">${text}</div>` : ""; }
 
+// Fire-and-forget funnel analytics — never blocks the UI, never sends PII
+// (only the event name + category labels; never the user's typed details).
+function track(name, extra){
+  try {
+    fetch('/api/event', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({name, ...extra})});
+  } catch(e) {}
+}
+
 async function boot(){
   CONFIG = await (await fetch('/api/config')).json();
   // scenarios
@@ -207,10 +216,12 @@ async function boot(){
   // returning from a real Stripe checkout?
   const paid = new URLSearchParams(location.search).get('paid');
   if (paid && sessionStorage.getItem('cb_req')) resumeAfterPayment(paid);
+  track('view');
 }
 
 function pickScenario(key){
   state.scenario = key;
+  track('scenario_selected', {scenario:key});
   document.querySelectorAll('.scenario').forEach(el =>
     el.classList.toggle('active', el.dataset.key === key));
   // render fields
@@ -254,11 +265,13 @@ $('#preview-btn').onclick = async () => {
       : '';
     $('#card-preview').classList.remove('hidden');
     $('#card-preview').scrollIntoView({behavior:'smooth', block:'start'});
+    track('preview_generated', {scenario: req.scenario, region: req.region});
   }catch(e){ msg($('#form-msg'), 'Something went wrong. Try again.','err'); }
   btn.disabled = false; btn.textContent = 'Write my letter — free preview';
 };
 
 $('#unlock-btn').onclick = async () => {
+  track('unlock_clicked');
   const btn = $('#unlock-btn'); btn.disabled = true; btn.innerHTML = '<span class="spin"></span> …';
   try{
     const req = JSON.parse(sessionStorage.getItem('cb_req'));
@@ -290,6 +303,7 @@ async function revealFull(req, token){
   else msg($('#full-msg'),'Ready to send. Personalise anything in [brackets] before sending.','ok');
   $('#card-full').classList.remove('hidden');
   $('#card-full').scrollIntoView({behavior:'smooth', block:'start'});
+  track('letter_unlocked');
   window._letter = d.body;
 }
 
