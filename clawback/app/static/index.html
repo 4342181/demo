@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Clawback — get your money back</title>
 <meta name="description" content="Turn a 60-second form into a professional demand letter that cites the right consumer law for your country. Free preview, then unlock.">
+<!-- Trust signals: a real favicon, themed browser chrome, and clean social previews for shared links. -->
+<link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%2319c37d'/><text x='32' y='46' font-size='40' text-anchor='middle' fill='%2304210f' font-family='Arial' font-weight='bold'>C</text></svg>">
+<meta name="theme-color" content="#0c1116">
+<meta property="og:title" content="Clawback — get your money back">
+<meta property="og:description" content="A firm demand letter that cites the exact consumer law on your side — in 60 seconds. See it free.">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
 <style>
   :root {
     --bg:#0c1116; --panel:#141c24; --panel2:#1b2630; --line:#2a3744;
@@ -276,6 +283,8 @@ async function boot(){
   $('#price-tag').innerHTML = `${CONFIG.price} <small>one-off</small>`;
   if (!CONFIG.payments_live) $('#pay-mode-note').innerHTML =
     '<span class="demo-badge">FREE BETA</span> No card needed right now — unlock free while we finish setting up payments.';
+  else $('#pay-mode-note').innerHTML =
+    '🔒 Secure checkout — your card is handled by Stripe. We never see or store it.';
   // returning from a real Stripe checkout?
   const paid = new URLSearchParams(location.search).get('paid');
   if (paid && sessionStorage.getItem('cb_req')) resumeAfterPayment(paid);
