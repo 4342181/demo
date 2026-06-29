@@ -201,7 +201,8 @@ def _form_schema() -> dict:
 # because the inputs are sensitive. The schema below has no free-text field by
 # design, so personal data physically can't be captured here.
 ALLOWED_EVENTS = {
-    "view", "scenario_selected", "preview_generated", "unlock_clicked", "letter_unlocked",
+    "view", "scenario_selected", "preview_generated", "unlock_clicked",
+    "letter_unlocked", "share_clicked",
 }
 _event_counts: Counter = Counter()
 

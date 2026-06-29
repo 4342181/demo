@@ -198,8 +198,9 @@
     <div class="step-label noprint"><span class="step-num">✓</span> Unlocked — ready to send</div>
     <div id="full-msg"></div>
     <div class="letter" id="full-text"></div>
+    <button class="btn noprint" id="share-btn" style="margin-bottom:10px;">🔗 Share your win</button>
     <div class="actions noprint">
-      <button class="btn" id="copy-btn">Copy text</button>
+      <button class="btn ghost" id="copy-btn">Copy text</button>
       <button class="btn ghost" id="print-btn">Print / PDF</button>
     </div>
     <button class="btn ghost noprint" id="download-btn" style="margin-top:10px;">Download .txt</button>
@@ -363,6 +364,60 @@ async function revealFull(req, token){
   celebrate();
   window._letter = d.body;
 }
+
+// A personal, shareable "win card" — Spotify-Wrapped style: it's about THEIR
+// case (their amount, who owes them, the exact law), not a generic milestone.
+// This is the organic-growth surface (see GROWTH.md).
+const LAW_LABEL = {za:'Consumer Protection Act', uk:'Consumer Rights Act',
+                   eu:'EU consumer law', us:'US consumer law'};
+
+function fitText(ctx, text, max){
+  let t = text || '';
+  if (ctx.measureText(t).width <= max) return t;
+  while (t.length > 1 && ctx.measureText(t + '…').width > max) t = t.slice(0, -1);
+  return t + '…';
+}
+
+function makeShareCard(){
+  const req = JSON.parse(sessionStorage.getItem('cb_req') || '{}');
+  const W = 1080, H = 1350, c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const x = c.getContext('2d');
+  const g = x.createLinearGradient(0, 0, W, H);
+  g.addColorStop(0, '#16303f'); g.addColorStop(1, '#0c1116');
+  x.fillStyle = g; x.fillRect(0, 0, W, H);
+  const M = 96;
+  x.fillStyle = '#19c37d'; x.fillRect(M, 150, 96, 14);                 // accent bar
+  x.fillStyle = '#eef4f8'; x.textBaseline = 'alphabetic';
+  x.font = '800 64px -apple-system,Segoe UI,Arial';
+  x.fillText("I'm getting my", M, 290);
+  x.fillText('money back.', M, 366);
+  if (req.amount){                                                     // the personal hook
+    x.fillStyle = '#19c37d'; x.font = '800 150px -apple-system,Segoe UI,Arial';
+    x.fillText(fitText(x, req.amount, W - M*2), M, 600);
+  }
+  x.fillStyle = '#94a6b4'; x.font = '600 42px -apple-system,Segoe UI,Arial';
+  if (req.company) x.fillText('from ' + fitText(x, req.company, W - M*2 - 130), M, 690);
+  x.fillText('backed by the ' + (LAW_LABEL[req.region] || 'consumer law'), M, 754);
+  x.fillStyle = '#cbd6df'; x.font = '500 38px -apple-system,Segoe UI,Arial';
+  x.fillText('A firm demand letter, in 60 seconds.', M, 1180);
+  x.fillStyle = '#19c37d'; x.font = '800 46px -apple-system,Segoe UI,Arial';
+  x.fillText('⟲ Clawback', M, 1245);
+  return c;
+}
+
+$('#share-btn').onclick = () => {
+  track('share_clicked');
+  makeShareCard().toBlob(async (blob) => {
+    const file = new File([blob], 'clawback-win.png', {type:'image/png'});
+    const caption = 'Stopped letting a company keep my money. Made with Clawback.';
+    if (navigator.canShare && navigator.canShare({files:[file]})){
+      try { await navigator.share({files:[file], text:caption}); return; } catch(e){}
+    }
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = 'clawback-win.png'; a.click();
+  }, 'image/png');
+};
 
 $('#copy-btn').onclick = async () => {
   await navigator.clipboard.writeText(window._letter||'');
