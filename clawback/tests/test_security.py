@@ -148,6 +148,18 @@ def test_analytics_events_validated_and_carry_no_pii():
     assert set(m.EventIn.model_fields) <= {"name", "scenario", "region"}
 
 
+def test_admin_funnel_enforced_on_backend():
+    """RBAC done right: the admin view is gated on the backend by a secret,
+    not by hiding a link — and is invisible (404) when not configured."""
+    m.ADMIN_TOKEN = None
+    assert client.get("/api/admin/funnel").status_code == 404         # disabled, hidden
+    m.ADMIN_TOKEN = "s3cret"
+    assert client.get("/api/admin/funnel").status_code == 401          # no token
+    assert client.get("/api/admin/funnel", headers={"X-Admin-Token": "wrong"}).status_code == 401
+    assert client.get("/api/admin/funnel", headers={"X-Admin-Token": "s3cret"}).status_code == 200
+    m.ADMIN_TOKEN = None
+
+
 def test_preview_is_free_and_open():
     """The free hook works without any token (and is deterministic/fast)."""
     r = client.post("/api/preview", json=BASE)

@@ -17,6 +17,7 @@ full letter is unlocked by a one-off payment.
 | `POST /api/preview` | anyone | rate limit only | first ~8 lines of letter | **deterministic only — never call the LLM here** (free path stays fast/cheap) |
 | `POST /api/checkout` | anyone | rate limit only | Stripe URL or demo token | server-side Stripe key only |
 | `POST /api/full` | paying user | **valid + unused** token | complete letter | LLM polish allowed here; **token is single-use** |
+| `GET /api/admin/funnel` | admin only | `X-Admin-Token` secret (constant-time) | funnel counts | 404 unless `CLAWBACK_ADMIN_TOKEN` set; enforced backend-side |
 | `GET /` + static | anyone | none | the SPA | no secrets in frontend |
 
 There is intentionally **no `/user/{id}`-style endpoint** and no per-user data,

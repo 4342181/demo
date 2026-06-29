@@ -129,6 +129,9 @@ UNLOCK_PRICE = os.environ.get("CLAWBACK_PRICE", "R49")
 UNLOCK_AMOUNT = int(os.environ.get("CLAWBACK_PRICE_MINOR", "4900"))
 UNLOCK_CURRENCY = os.environ.get("CLAWBACK_CURRENCY", "zar")
 STRIPE_KEY = os.environ.get("STRIPE_SECRET_KEY")
+# RBAC for an anonymous app = a single admin secret (set to enable the admin
+# view). A full role system / Clerk would be overkill with no user accounts.
+ADMIN_TOKEN = os.environ.get("CLAWBACK_ADMIN_TOKEN")
 
 # In-memory record of demo tokens we've handed out. Fine for a single-process
 # demo; a real deployment would verify Stripe sessions statelessly (see below).
@@ -223,6 +226,22 @@ def track_event(ev: EventIn):
     _event_counts[ev.name] += 1
     logger.info("EVENT %s scenario=%s region=%s", ev.name, ev.scenario or "-", ev.region or "-")
     return {"ok": True}
+
+
+@app.get("/api/admin/funnel")
+def admin_funnel(request: Request):
+    """Admin-only: the conversion funnel. Access is enforced on the BACKEND
+    (a secret compared in constant time) — the security never relies on the
+    link being hidden. Disabled (404) unless CLAWBACK_ADMIN_TOKEN is set, so
+    we don't even hint the endpoint exists."""
+    if not ADMIN_TOKEN:
+        raise HTTPException(404, "Not found")
+    if not secrets.compare_digest(request.headers.get("X-Admin-Token", ""), ADMIN_TOKEN):
+        raise HTTPException(401, "Unauthorized")
+    counts = dict(_event_counts)
+    views = counts.get("view", 0)
+    unlocked = counts.get("letter_unlocked", 0)
+    return {"counts": counts, "view_to_unlock": round(unlocked / views, 4) if views else None}
 
 
 @app.get("/api/config")
