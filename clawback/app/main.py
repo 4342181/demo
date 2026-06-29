@@ -83,6 +83,16 @@ _rate_lock = threading.Lock()
 # previous window's count by how much it still overlaps "now" smooths that
 # boundary out — with just two counters per IP (cheap, in-process).
 _rate_hits: dict[str, list] = {}
+_last_prune = 0.0
+
+
+def _prune_stale(now: float) -> None:
+    """Drop IPs older than the previous window (we keep current + previous,
+    since the sliding window weights the previous one). O(n), so callers gate
+    it by time — see the middleware."""
+    cutoff = int(now // RATE_WINDOW) - 1
+    for k in [k for k, v in _rate_hits.items() if v[0] < cutoff]:
+        _rate_hits.pop(k, None)
 
 
 def _rate_check(ip: str, now: float) -> bool:
@@ -106,12 +116,15 @@ async def rate_limit(request: Request, call_next):
     if request.url.path.startswith("/api/"):
         ip = request.client.host if request.client else "unknown"
         now = time.time()
+        global _last_prune
         with _rate_lock:
             allowed = _rate_check(ip, now)
-            if len(_rate_hits) > 10000:               # bound memory: drop stale IPs
-                cutoff = int(now // RATE_WINDOW) - 1
-                for k in [k for k, v in _rate_hits.items() if v[0] < cutoff]:
-                    _rate_hits.pop(k, None)
+            # Bound memory by sweeping stale IPs at most once per window, not
+            # on every request — so a unique-IP flood can't make each request
+            # pay an O(n) scan while holding the lock.
+            if now - _last_prune >= RATE_WINDOW:
+                _prune_stale(now)
+                _last_prune = now
         if not allowed:
             retry = max(1, int(RATE_WINDOW - (now % RATE_WINDOW)))
             return JSONResponse(

@@ -59,6 +59,20 @@ def test_sliding_window_blocks_boundary_burst():
     assert allowed_end + allowed_start <= 100 + 5  # ≈ one window's worth, not two
 
 
+def test_rate_limiter_prunes_stale_ips_only():
+    """Memory bound: stale IPs are dropped, but current/previous-window
+    entries (still used by the sliding window) are kept."""
+    m._rate_hits.clear()
+    now = 1000 * m.RATE_WINDOW
+    win = int(now // m.RATE_WINDOW)
+    m._rate_hits["old"] = [win - 3, 9, 0]      # 3 windows ago → stale
+    m._rate_hits["prev"] = [win - 1, 2, 0]     # previous window → keep
+    m._rate_hits["now"] = [win, 1, 0]          # current window → keep
+    m._prune_stale(now)
+    assert "old" not in m._rate_hits
+    assert "prev" in m._rate_hits and "now" in m._rate_hits
+
+
 def test_length_cap_rejected():
     """Invariant 3: oversized input is rejected, not processed."""
     assert client.post("/api/preview", json={**BASE, "facts": "x" * 5000}).status_code == 422
