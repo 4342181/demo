@@ -118,19 +118,43 @@ def _safe_error_detail(response):
 
 
 if __name__ == "__main__":
-    # Simple CLI for manual testing:
-    #   python tiktok_transcript.py <tiktok_url> [language]
-    import sys
+    # Simple CLI for manual testing, e.g.:
+    #   python tiktok_transcript.py <tiktok_url> --language en --ai
+    import argparse
 
-    if len(sys.argv) < 2:
-        print("Usage: python tiktok_transcript.py <tiktok_url> [language]")
-        raise SystemExit(1)
+    parser = argparse.ArgumentParser(
+        description="Fetch a TikTok video transcript via ScrapeCreators."
+    )
+    parser.add_argument("url", help="TikTok video URL")
+    parser.add_argument(
+        "language",
+        nargs="?",
+        default=None,
+        help="Optional 2-letter language code (e.g. en, es). May also be "
+        "given via --language.",
+    )
+    parser.add_argument(
+        "-l",
+        "--language",
+        dest="language_opt",
+        default=None,
+        help="2-letter language code (e.g. en, es).",
+    )
+    parser.add_argument(
+        "--ai",
+        action="store_true",
+        help="Use AI as a fallback when no transcript is found. Costs 10 "
+        "credits and only works for videos under 2 minutes.",
+    )
+    args = parser.parse_args()
 
-    video_url = sys.argv[1]
-    lang = sys.argv[2] if len(sys.argv) > 2 else None
+    # Accept the language either positionally or via --language.
+    lang = args.language_opt or args.language
 
     try:
-        result = get_tiktok_transcript(video_url, language=lang)
+        result = get_tiktok_transcript(
+            args.url, language=lang, use_ai_as_fallback=args.ai
+        )
     except (ValueError, TikTokTranscriptError) as err:
         print(f"Error: {err}")
         raise SystemExit(1)
