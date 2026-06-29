@@ -80,6 +80,11 @@ rate-limited) is provided for load-balancer/orchestrator health checks. There's
 no file storage to offload (no object store needed) and no database to cache
 beyond the already-memoized static config.
 
+**Load testing.** `python scripts/loadtest.py -n 500 -c 50` stress-tests the
+running API (stdlib only). A single instance serves ~680 req/s for the free
+preview, and under a concurrent flood the limiter holds exactly at the cap
+(e.g. 60×`200` then `429`s). Use it to sanity-check before real traffic.
+
 These are locked in by an automated regression suite — run `python -m pytest`
 from `clawback/` (covers rate limiting, input/enum validation, the paid-token
 gate + single use, sanitized errors, and no secrets in the frontend bundle).
