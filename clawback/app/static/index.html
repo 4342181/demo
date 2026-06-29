@@ -57,6 +57,8 @@
   .scenario b { display:block; font-size:14px; margin-bottom:3px; }
   .scenario small { color:var(--muted); font-size:12px; line-height:1.3; }
   label { display:block; font-size:13px; color:var(--muted); margin:12px 0 5px; font-weight:600; }
+  .subhead { font-size:11.5px; text-transform:uppercase; letter-spacing:.07em; color:var(--muted);
+             font-weight:700; margin:18px 0 4px; padding-top:14px; border-top:1px solid var(--line); }
   input, textarea, select {
     width:100%; padding:11px 12px; background:var(--panel2); border:1px solid var(--line);
     border-radius:10px; color:var(--ink); font-size:15px; font-family:inherit; }
@@ -145,6 +147,7 @@
     <div id="fields"></div>
     <label>Anything else? (what happened, in your words — optional)</label>
     <textarea id="facts" placeholder="e.g. I called twice and was promised a callback that never came."></textarea>
+    <div class="subhead">Your contact details</div>
     <div class="row2">
       <div><label>Your name</label><input id="sender_name" placeholder="e.g. T. Ephraim"></div>
       <div><label>Your email / phone</label><input id="sender_contact" placeholder="how they reply"></div>
