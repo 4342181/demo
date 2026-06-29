@@ -287,7 +287,21 @@ async function boot(){
   else $('#pay-mode-note').innerHTML =
     '🔒 Secure checkout — your card is handled by Stripe. We never see or store it.';
   // returning from a real Stripe checkout?
-  const paid = new URLSearchParams(location.search).get('paid');
+  // Deep-link prefill: SEO/share links (e.g. ?scenario=flight&company=SkyHigh)
+  // drop the user straight into the core loop — first value in seconds, no
+  // setup. A fully-specified link lands them directly on their letter.
+  const q = new URLSearchParams(location.search);
+  const qs = q.get('scenario');
+  if (qs && CONFIG.scenarios[qs]){
+    pickScenario(qs);
+    const qr = q.get('region');
+    if (qr && CONFIG.regions[qr]){ $('#region').value = qr; state.region = qr; }
+    const setF = (name, val) => { const el = $('#f_' + name); if (el && val) el.value = val; };
+    setF('company', q.get('company')); setF('amount', q.get('amount'));
+    if ((q.get('company') || '').trim()) generatePreview();  // fully-specified → instant letter
+  }
+
+  const paid = q.get('paid');
   if (paid && sessionStorage.getItem('cb_req')) resumeAfterPayment(paid);
   track('view');
 }
@@ -329,7 +343,7 @@ function collect(){
   return req;
 }
 
-$('#preview-btn').onclick = async () => {
+async function generatePreview(){
   if (!state.scenario){ msg($('#form-msg'),'Pick what happened first.','err'); return; }
   const req = collect();
   // The one bit of friction worth keeping: a letter to "[Company name]" is
@@ -356,7 +370,8 @@ $('#preview-btn').onclick = async () => {
     track('preview_generated', {scenario: req.scenario, region: req.region});
   }catch(e){ msg($('#form-msg'), 'Something went wrong. Try again.','err'); }
   btn.disabled = false; btn.textContent = 'Write my letter — free preview';
-};
+}
+$('#preview-btn').onclick = generatePreview;
 
 $('#unlock-btn').onclick = async () => {
   track('unlock_clicked');
