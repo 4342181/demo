@@ -137,5 +137,18 @@ if __name__ == "__main__":
 
     print(f"Video ID:   {result.get('id')}")
     print(f"Video URL:  {result.get('url')}")
+    if "credits_remaining" in result:
+        print(f"Credits:    {result.get('credits_remaining')}")
     print("Transcript:")
-    print(result.get("transcript", "<no transcript returned>"))
+
+    transcript = result.get("transcript")
+    if transcript:
+        print(transcript)
+    else:
+        # A successful request can still return transcript: null when the
+        # video has no captions. The AI fallback can generate one.
+        print("<no transcript available for this video>")
+        print(
+            "Tip: retry with use_ai_as_fallback=True to AI-generate one "
+            "(costs 10 credits, videos under 2 minutes only)."
+        )
