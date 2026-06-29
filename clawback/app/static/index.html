@@ -125,7 +125,7 @@
   <header class="top noprint">
     <div class="logo">⟲</div>
     <div class="brand">Clawback</div>
-    <div class="tag">Demand letters that<br>actually get refunds</div>
+    <div class="tag">Demand letters that cite<br>the law on your side</div>
   </header>
 
   <section class="hero noprint">
@@ -180,7 +180,7 @@
     <div class="lever" id="lever"></div>
     <div class="fade"><div class="letter" id="preview-text"></div></div>
     <div class="paywall">
-      <p class="paywall-lead">You've got the argument — and the exact law it stands on. Unlock the finished letter and send it today.</p>
+      <p class="paywall-lead">The preview makes your case. What's locked is the part that gets results — your exact demand, the dated deadline, and the named escalation. Two minutes from sent.</p>
       <p class="muted" id="hidden-note" style="margin:0 0 8px;"></p>
       <div class="price" id="price-tag">R49 <small>one-off</small></div>
       <ul class="ticks">
@@ -190,6 +190,7 @@
       </ul>
       <button class="btn gold" id="unlock-btn">Finish my letter →</button>
       <p class="muted" id="pay-mode-note" style="margin-top:10px;"></p>
+      <button class="btn ghost noprint" id="share-preview-btn" style="margin-top:12px;">🔥 Share what you're claiming</button>
     </div>
   </div>
 
@@ -270,7 +271,7 @@ async function boot(){
   reg.onchange = () => state.region = reg.value;
   $('#price-tag').innerHTML = `${CONFIG.price} <small>one-off</small>`;
   if (!CONFIG.payments_live) $('#pay-mode-note').innerHTML =
-    '<span class="demo-badge">DEMO MODE</span> No card needed — payments aren\'t wired to live keys yet.';
+    '<span class="demo-badge">FREE BETA</span> No card needed right now — unlock free while we finish setting up payments.';
   // returning from a real Stripe checkout?
   const paid = new URLSearchParams(location.search).get('paid');
   if (paid && sessionStorage.getItem('cb_req')) resumeAfterPayment(paid);
@@ -318,9 +319,10 @@ $('#preview-btn').onclick = async () => {
     const d = await r.json();
     $('#lever').innerHTML = `<b>Your legal lever:</b> ${d.lever_note}`;
     $('#preview-text').textContent = d.preview;
-    $('#hidden-note').textContent = d.hidden_lines > 0
-      ? `+ ${d.hidden_lines} more lines including your demand, the ${state.region==='za'?'CPA':''} deadline of ${d.deadline}, and the escalation path.`
-      : '';
+    const amt = req.amount ? `your ${req.amount} demand` : 'your full demand';
+    const who = req.company ? ` you'll report ${req.company} to` : '';
+    $('#hidden-note').textContent =
+      `Locked: ${amt}, the ${d.deadline} deadline, and the escalation path${who}.`;
     $('#card-preview').classList.remove('hidden');
     $('#card-preview').scrollIntoView({behavior:'smooth', block:'start'});
     track('preview_generated', {scenario: req.scenario, region: req.region});
@@ -390,8 +392,8 @@ function makeShareCard(){
   x.fillStyle = '#19c37d'; x.fillRect(M, 150, 96, 14);                 // accent bar
   x.fillStyle = '#eef4f8'; x.textBaseline = 'alphabetic';
   x.font = '800 64px -apple-system,Segoe UI,Arial';
-  x.fillText("I'm getting my", M, 290);
-  x.fillText('money back.', M, 366);
+  x.fillText("I'm done asking.", M, 290);
+  x.fillText("I'm demanding it.", M, 366);
   if (req.amount){                                                     // the personal hook
     x.fillStyle = '#19c37d'; x.font = '800 150px -apple-system,Segoe UI,Arial';
     x.fillText(fitText(x, req.amount, W - M*2), M, 600);
@@ -406,18 +408,20 @@ function makeShareCard(){
   return c;
 }
 
-$('#share-btn').onclick = () => {
-  track('share_clicked');
+function shareWin(where){
+  track('share_clicked', {scenario: where});
   makeShareCard().toBlob(async (blob) => {
     const file = new File([blob], 'clawback-win.png', {type:'image/png'});
-    const caption = 'Stopped letting a company keep my money. Made with Clawback.';
+    const caption = 'Stopped asking, started demanding — with the actual law cited. Made with Clawback.';
     if (navigator.canShare && navigator.canShare({files:[file]})){
       try { await navigator.share({files:[file], text:caption}); return; } catch(e){}
     }
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob); a.download = 'clawback-win.png'; a.click();
   }, 'image/png');
-};
+}
+$('#share-btn').onclick = () => shareWin('unlocked');
+$('#share-preview-btn').onclick = () => shareWin('preview');
 
 $('#copy-btn').onclick = async () => {
   await navigator.clipboard.writeText(window._letter||'');

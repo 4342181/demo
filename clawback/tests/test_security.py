@@ -148,6 +148,32 @@ def test_analytics_events_validated_and_carry_no_pii():
     assert set(m.EventIn.model_fields) <= {"name", "scenario", "region"}
 
 
+def test_unlock_token_single_use_under_concurrency():
+    """The token must be spendable exactly once even when many requests carry
+    it at the same time (the sequential test alone hid a check-then-act race)."""
+    import threading
+    token = client.post("/api/checkout", json=BASE).json()["token"]
+    results = []
+    barrier = threading.Barrier(8)
+
+    def hit():
+        barrier.wait()  # line everyone up to maximise overlap
+        results.append(client.post("/api/full", json={**BASE, "token": token}).status_code)
+
+    threads = [threading.Thread(target=hit) for _ in range(8)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    assert results.count(200) == 1, results          # exactly one letter per payment
+    assert results.count(402) == 7, results
+
+
+def test_empty_token_rejected():
+    assert client.post("/api/full", json={**BASE, "token": ""}).status_code == 402
+    assert client.post("/api/full", json={**BASE}).status_code == 402
+
+
 def test_admin_funnel_enforced_on_backend():
     """RBAC done right: the admin view is gated on the backend by a secret,
     not by hiding a link — and is invisible (404) when not configured."""

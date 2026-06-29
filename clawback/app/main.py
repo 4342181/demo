@@ -142,6 +142,7 @@ _DEMO_TOKENS: set[str] = set()
 # to mint unlimited letters from a single payment. Per-process like the rest;
 # move to Redis/DB for multi-worker production.
 _USED_TOKENS: set[str] = set()
+_token_lock = threading.Lock()  # makes check-and-claim atomic across threads
 
 
 class GenerateRequest(BaseModel):
@@ -322,14 +323,31 @@ def _token_is_paid(token: str | None) -> bool:
 
 @app.post("/api/full")
 def full(req: GenerateRequest):
-    """The paid payload: the complete letter. Requires a paid/demo token,
-    which is single-use — it can't be replayed for a second free letter."""
-    if req.token in _USED_TOKENS:
-        raise HTTPException(402, "This unlock has already been used. Please pay to unlock another letter.")
-    if not _token_is_paid(req.token):
+    """The paid payload: the complete letter. Requires a paid token, which is
+    single-use — it can't be replayed for a second free letter.
+
+    Concurrency: `full` is sync, so Starlette runs it in a threadpool and two
+    requests carrying the same token can race. We therefore *claim* the token
+    atomically under a lock BEFORE the slow letters.build() (which may call the
+    LLM), and roll the claim back if the token turns out unpaid or the build
+    fails. The Stripe check stays outside the lock so a network call can't
+    stall other unlocks."""
+    if not req.token:
         raise HTTPException(402, "Payment required to unlock the full letter.")
-    result = letters.build(req)
-    _USED_TOKENS.add(req.token)  # spend the token: one payment, one letter
+    with _token_lock:
+        if req.token in _USED_TOKENS:
+            raise HTTPException(402, "This unlock has already been used. Please pay to unlock another letter.")
+        _USED_TOKENS.add(req.token)  # reserve immediately so a concurrent twin is blocked
+    if not _token_is_paid(req.token):
+        with _token_lock:
+            _USED_TOKENS.discard(req.token)
+        raise HTTPException(402, "Payment required to unlock the full letter.")
+    try:
+        result = letters.build(req)
+    except Exception:
+        with _token_lock:
+            _USED_TOKENS.discard(req.token)  # don't burn a paid token on a build crash
+        raise
     return {
         "subject": result["subject"],
         "body": result["body"],
