@@ -40,6 +40,11 @@
   .confetti { position:absolute; top:-14px; border-radius:2px;
               animation:confetti-fall linear forwards; }
   @keyframes confetti-fall { to { transform:translateY(108vh) rotate(600deg); opacity:.85; } }
+  /* Tactile "you hit an edge" feedback for a blocked action (rubber-band idea).
+     Disabled automatically for prefers-reduced-motion via the rule above. */
+  @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)}
+    40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} }
+  .shake { animation:shake .4s ease; }
   .wrap { max-width:680px; margin:0 auto; padding:20px 16px 64px; }
   header.top { display:flex; align-items:center; gap:10px; padding:6px 2px 18px; }
   .logo { width:34px; height:34px; border-radius:9px; background:linear-gradient(135deg,var(--accent),var(--accent2));
@@ -352,7 +357,13 @@ async function generatePreview(){
   // useless, so require who it's to before we generate.
   if (!(req.company || '').trim()){
     msg($('#form-msg'), 'Add who this is to (the company) — everything else is optional.', 'err');
-    const el = $('#f_company'); if (el) el.focus();
+    const el = $('#f_company');
+    if (el){
+      el.focus();
+      el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake');  // restart the animation
+      setTimeout(() => el.classList.remove('shake'), 450);
+    }
+    if (navigator.vibrate) navigator.vibrate(25);  // subtle haptic "edge" on supported devices
     return;
   }
   const btn = $('#preview-btn'); btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Writing…';
