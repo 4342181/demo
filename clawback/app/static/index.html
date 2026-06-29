@@ -30,7 +30,18 @@
   .tag { color:var(--muted); font-size:13px; margin-left:auto; text-align:right; }
   .hero h1 { font-size:30px; line-height:1.12; letter-spacing:-.03em; margin:6px 0 10px; }
   .hero h1 span { color:var(--accent); }
-  .hero p { color:var(--muted); font-size:15px; line-height:1.5; margin:0 0 18px; }
+  .hero p { color:var(--muted); font-size:15px; line-height:1.5; margin:0 0 16px; }
+  .trust { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 18px; }
+  .trust span { font-size:12.5px; color:var(--muted); background:var(--panel2);
+                border:1px solid var(--line); border-radius:999px; padding:5px 11px; }
+  .trust b { color:var(--accent); font-weight:800; }
+  .steps { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:0 0 22px; }
+  .steps .s { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:13px; }
+  .steps .s i { font-style:normal; display:inline-flex; width:22px; height:22px; border-radius:7px;
+                background:var(--accent); color:#04210f; font-weight:800; font-size:12px;
+                align-items:center; justify-content:center; margin-bottom:9px; }
+  .steps .s b { display:block; font-size:13.5px; margin-bottom:3px; }
+  .steps .s small { color:var(--muted); font-size:12px; line-height:1.36; }
   .card { background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
           padding:20px; margin-bottom:16px;
           box-shadow:0 1px 0 rgba(255,255,255,.04) inset, 0 12px 28px -12px rgba(0,0,0,.55); }
@@ -90,7 +101,7 @@
           border-top-color:#04210f;border-radius:50%;animation:s .7s linear infinite;vertical-align:-2px;}
   @keyframes s { to { transform:rotate(360deg);} }
   footer { color:var(--muted); font-size:12px; text-align:center; margin-top:8px; line-height:1.6;}
-  @media (max-width:520px){ .grid{grid-template-columns:1fr;} .hero h1{font-size:26px;} }
+  @media (max-width:520px){ .grid{grid-template-columns:1fr;} .steps{grid-template-columns:1fr;} .hero h1{font-size:26px;} }
   @media print { body{background:#fff;color:#000;} .noprint{display:none!important;}
     .letter{border:none;color:#000;background:#fff;font-size:12px;} .wrap{max-width:100%;} }
 </style>
@@ -108,6 +119,16 @@
     <p>Answer a few questions and Clawback writes a firm, professional demand letter
        that cites the <b>right consumer law for your country</b> — with a deadline and an
        escalation threat. See it free, then unlock to send.</p>
+    <div class="trust">
+      <span><b>✓</b> No account needed</span>
+      <span><b>✓</b> See the letter free</span>
+      <span><b>✓</b> Cites real consumer law</span>
+    </div>
+    <div class="steps">
+      <div class="s"><i>1</i><b>Tell us what happened</b><small>Pick the problem, fill a 60-second form.</small></div>
+      <div class="s"><i>2</i><b>We cite the exact law</b><small>The specific rule for your country, a hard deadline, an escalation path.</small></div>
+      <div class="s"><i>3</i><b>Send it</b><small>Unlock the full letter, then copy, download, or print to PDF.</small></div>
+    </div>
   </section>
 
   <!-- STEP 1: scenario -->
