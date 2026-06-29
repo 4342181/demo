@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "scrapecreators-api": {
+      "source": "scrapecreators/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/scrapecreators-api/SKILL.md",
+      "computedHash": "53b3f03866951c84f791720b9c4381c9238ff4d67f6c588710870d476604b6d0"
+    }
+  }
+}
