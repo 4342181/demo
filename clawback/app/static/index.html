@@ -99,6 +99,7 @@
   .fade::after { content:""; position:absolute; left:0; right:0; bottom:0; height:120px;
                  background:linear-gradient(transparent, var(--panel)); pointer-events:none; }
   .paywall { text-align:center; padding:6px 4px 2px; }
+  .paywall-lead { font-size:13.5px; color:var(--ink); line-height:1.5; margin:14px 6px 12px; }
   .price { font-size:34px; font-weight:800; letter-spacing:-.02em; }
   .price small { font-size:14px; color:var(--muted); font-weight:600; }
   .ticks { list-style:none; padding:0; margin:12px 0 16px; }
@@ -179,14 +180,15 @@
     <div class="lever" id="lever"></div>
     <div class="fade"><div class="letter" id="preview-text"></div></div>
     <div class="paywall">
-      <p class="muted" id="hidden-note" style="margin:14px 0 6px;"></p>
+      <p class="paywall-lead">You've got the argument — and the exact law it stands on. Unlock the finished letter and send it today.</p>
+      <p class="muted" id="hidden-note" style="margin:0 0 8px;"></p>
       <div class="price" id="price-tag">R49 <small>one-off</small></div>
       <ul class="ticks">
-        <li>The complete, ready-to-send letter</li>
-        <li>The exact law/regulation that backs your claim</li>
+        <li>The complete letter, personalised and ready to send</li>
+        <li>Your firm deadline and escalation path filled in</li>
         <li>Copy, download, or print to PDF</li>
       </ul>
-      <button class="btn gold" id="unlock-btn">Unlock my letter →</button>
+      <button class="btn gold" id="unlock-btn">Finish my letter →</button>
       <p class="muted" id="pay-mode-note" style="margin-top:10px;"></p>
     </div>
   </div>
