@@ -161,6 +161,7 @@
   <!-- STEP 2: details -->
   <div class="card noprint hidden" id="card-details">
     <div class="step-label"><span class="step-num">2</span> The details</div>
+    <p class="muted" style="margin:0 0 6px;">Only the company is required — everything else just sharpens the letter.</p>
     <label>Where are you (which consumer law applies)?</label>
     <select id="region"></select>
     <div id="fields"></div>
@@ -299,9 +300,16 @@ function pickScenario(key){
   // render fields
   const wrap = $('#fields'); wrap.innerHTML = '';
   for (const f of CONFIG.scenarios[key].fields){
-    const lab = document.createElement('label'); lab.textContent = f.label;
+    const required = (f.name === 'company');
+    const lab = document.createElement('label');
+    // Smarter friction: mark the one required field, and label the rest
+    // optional so the form doesn't feel heavier than it is.
+    lab.innerHTML = f.label + (required
+      ? ' <span style="color:var(--accent)">*</span>'
+      : ' <span style="font-weight:400;color:var(--muted)">· optional</span>');
     const inp = document.createElement('input'); inp.id = 'f_' + f.name;
     inp.placeholder = f.placeholder || '';
+    if (required) inp.setAttribute('aria-required', 'true');
     wrap.appendChild(lab); wrap.appendChild(inp);
   }
   $('#card-details').classList.remove('hidden');
@@ -323,10 +331,17 @@ function collect(){
 
 $('#preview-btn').onclick = async () => {
   if (!state.scenario){ msg($('#form-msg'),'Pick what happened first.','err'); return; }
+  const req = collect();
+  // The one bit of friction worth keeping: a letter to "[Company name]" is
+  // useless, so require who it's to before we generate.
+  if (!(req.company || '').trim()){
+    msg($('#form-msg'), 'Add who this is to (the company) — everything else is optional.', 'err');
+    const el = $('#f_company'); if (el) el.focus();
+    return;
+  }
   const btn = $('#preview-btn'); btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Writing…';
   msg($('#form-msg'),'','');
   try{
-    const req = collect();
     sessionStorage.setItem('cb_req', JSON.stringify(req));
     const r = await fetch('/api/preview', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(req)});
     const d = await r.json();
