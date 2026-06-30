@@ -6,138 +6,137 @@
 <title>Clawback — get your money back</title>
 <meta name="description" content="Turn a 60-second form into a professional demand letter that cites the right consumer law for your country. Free preview, then unlock.">
 <!-- Trust signals: a real favicon, themed browser chrome, and clean social previews for shared links. -->
-<link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%2319c37d'/><text x='32' y='46' font-size='40' text-anchor='middle' fill='%2304210f' font-family='Arial' font-weight='bold'>C</text></svg>">
-<meta name="theme-color" content="#0c1116">
+<link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='10' fill='%23c2362b'/><text x='32' y='46' font-size='40' text-anchor='middle' fill='%23ffffff' font-family='Arial' font-weight='bold'>C</text></svg>">
+<meta name="theme-color" content="#efe8d6">
 <meta property="og:title" content="Clawback — get your money back">
 <meta property="og:description" content="A firm demand letter that cites the exact consumer law on your side — in 60 seconds. See it free.">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary">
 <style>
+  /* "Notice of Demand" — identity grounded in the subject: official consumer
+     demand letters. Document paper, ink navy, a single demand-red accent used
+     like a rubber stamp, typewriter mono for anything that reads as legal.
+     Signature element: the rotated NOTICE OF DEMAND stamp on the hero. */
   :root {
-    --bg:#0c1116; --panel:#141c24; --panel2:#1b2630; --line:#2a3744;
-    --ink:#eef4f8; --muted:#94a6b4; --accent:#19c37d; --accent2:#0f9d63;
-    --danger:#ff6b6b; --gold:#f5b740;
-    --radius:16px;
+    --paper:#efe8d6; --sheet:#ffffff; --field:#fcfbf6;
+    --ink:#16233b; --muted:#6c7280; --soft:#4a5260;
+    --line:#e2dbc8; --demand:#c2362b; --demand-soft:#f5e4e0; --seal:#26456f;
+    --accent:var(--demand); --gold:var(--demand);
+    --radius:9px;
   }
   * { box-sizing:border-box; }
   body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
-         background:radial-gradient(1200px 600px at 80% -10%, #16303f 0%, var(--bg) 55%);
-         color:var(--ink); min-height:100vh; letter-spacing:-.003em; accent-color:var(--accent);
+         background-color:var(--paper);
+         background-image:repeating-linear-gradient(transparent 0 35px, rgba(38,69,111,.06) 35px 36px);
+         color:var(--ink); min-height:100vh; letter-spacing:-.002em; accent-color:var(--demand);
          -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; text-rendering:optimizeLegibility; }
-  a { color:var(--accent); }
-  /* a11y + craft: visible keyboard focus, balanced headings, respect reduced motion */
-  :where(button,a,input,textarea,select):focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  a { color:var(--seal); }
+  :where(button,a,input,textarea,select):focus-visible { outline:2px solid var(--demand); outline-offset:2px; }
   h1, .step-label { text-wrap:balance; }
   @media (prefers-reduced-motion: reduce){ * { animation:none!important; transition:none!important; } }
-  /* Squircle (superellipse) corners where supported — the smoother Apple-style
-     curve — degrading to the standard rounded rects everywhere else. */
-  @supports (corner-shape: squircle) {
-    .card, .btn, input, textarea, select, .scenario, .letter, .lever, .msg,
-    .trust span, .steps .s, .logo, .step-num, .price small { corner-shape: squircle; }
-  }
-  /* Frosted-glass cards where supported (visionOS-style depth). Kept subtle —
-     72% panel + a modest blur — so text contrast and the trustworthy feel
-     aren't traded for flash. Degrades to the solid panel otherwise. */
-  @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-    .card { background: rgba(20,28,36,0.72);
-            -webkit-backdrop-filter: blur(18px) saturate(120%);
-            backdrop-filter: blur(18px) saturate(120%); }
-  }
-  /* Emotional peak: a brief, tasteful confetti burst when the letter unlocks. */
   .confetti-root { position:fixed; inset:0; pointer-events:none; overflow:hidden; z-index:60; }
-  .confetti { position:absolute; top:-14px; border-radius:2px;
-              animation:confetti-fall linear forwards; }
+  .confetti { position:absolute; top:-14px; border-radius:1px; animation:confetti-fall linear forwards; }
   @keyframes confetti-fall { to { transform:translateY(108vh) rotate(600deg); opacity:.85; } }
-  /* Tactile "you hit an edge" feedback for a blocked action (rubber-band idea).
-     Disabled automatically for prefers-reduced-motion via the rule above. */
   @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)}
     40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} }
   .shake { animation:shake .4s ease; }
-  .wrap { max-width:680px; margin:0 auto; padding:20px 16px 64px; }
-  header.top { display:flex; align-items:center; gap:10px; padding:6px 2px 18px; }
-  .logo { width:34px; height:34px; border-radius:9px; background:linear-gradient(135deg,var(--accent),var(--accent2));
-          display:flex; align-items:center; justify-content:center; font-size:20px; }
-  .brand { font-weight:800; font-size:20px; letter-spacing:-.02em; }
-  .tag { color:var(--muted); font-size:13px; margin-left:auto; text-align:right; }
-  .hero h1 { font-size:30px; line-height:1.12; letter-spacing:-.03em; margin:6px 0 10px; }
-  .hero h1 span { color:var(--accent); }
-  .hero p { color:var(--muted); font-size:15px; line-height:1.5; margin:0 0 16px; }
+  .wrap { max-width:660px; margin:0 auto; padding:20px 16px 64px; }
+  header.top { display:flex; align-items:center; gap:10px; padding:6px 2px 12px;
+               border-bottom:2px solid var(--ink); margin-bottom:4px; }
+  .logo { width:34px; height:34px; border-radius:6px; background:var(--demand); color:#fff;
+          display:flex; align-items:center; justify-content:center; font-size:19px; font-weight:800; }
+  .brand { font-weight:800; font-size:20px; letter-spacing:-.02em; color:var(--ink); }
+  .tag { color:var(--muted); font-size:11px; margin-left:auto; text-align:right;
+         font-family:ui-monospace,Menlo,Consolas,monospace; text-transform:uppercase; letter-spacing:.04em; }
+  .hero { position:relative; }
+  .eyebrow { font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12px; letter-spacing:.16em;
+             text-transform:uppercase; color:var(--demand); font-weight:700; margin:16px 0 8px; }
+  .stamp { position:absolute; top:8px; right:2px; transform:rotate(-9deg);
+           border:3px double var(--demand); color:var(--demand); opacity:.7;
+           font-family:ui-monospace,Menlo,Consolas,monospace; font-weight:800; font-size:12.5px;
+           letter-spacing:.1em; text-transform:uppercase; padding:6px 10px; border-radius:3px;
+           line-height:1.18; text-align:center; }
+  .hero h1 { font-size:33px; line-height:1.08; letter-spacing:-.03em; margin:2px 0 12px; color:var(--ink); }
+  .hero h1 span { color:var(--demand); }
+  .hero p { color:var(--soft); font-size:15px; line-height:1.55; margin:0 0 16px; }
   .trust { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 18px; }
-  .trust span { font-size:12.5px; color:var(--muted); background:var(--panel2);
+  .trust span { font-size:12.5px; color:var(--ink); background:var(--sheet);
                 border:1px solid var(--line); border-radius:999px; padding:5px 11px; }
-  .trust b { color:var(--accent); font-weight:800; }
+  .trust b { color:var(--demand); font-weight:800; }
   .steps { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:0 0 22px; }
-  .steps .s { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:13px; }
-  .steps .s i { font-style:normal; display:inline-flex; width:22px; height:22px; border-radius:7px;
-                background:var(--accent); color:#04210f; font-weight:800; font-size:12px;
+  .steps .s { background:var(--sheet); border:1px solid var(--line); border-radius:9px; padding:13px; }
+  .steps .s i { font-style:normal; display:inline-flex; width:22px; height:22px; border-radius:5px;
+                background:var(--demand); color:#fff; font-weight:800; font-size:12px;
                 align-items:center; justify-content:center; margin-bottom:9px; }
-  .steps .s b { display:block; font-size:13.5px; margin-bottom:3px; }
+  .steps .s b { display:block; font-size:13.5px; margin-bottom:3px; color:var(--ink); }
   .steps .s small { color:var(--muted); font-size:12px; line-height:1.36; }
-  .card { background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+  .card { background:var(--sheet); border:1px solid var(--line); border-radius:var(--radius);
           padding:20px; margin-bottom:16px;
-          box-shadow:0 1px 0 rgba(255,255,255,.04) inset, 0 12px 28px -12px rgba(0,0,0,.55); }
+          box-shadow:0 1px 2px rgba(21,34,58,.04), 0 16px 30px -20px rgba(21,34,58,.34); }
   .step-label { font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted);
                 font-weight:700; margin-bottom:10px; display:flex; align-items:center; gap:8px;}
-  .step-num { width:20px;height:20px;border-radius:50%;background:var(--accent);color:#04210f;
+  .step-num { width:20px;height:20px;border-radius:5px;background:var(--demand);color:#fff;
               display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;}
   .grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-  .scenario { text-align:left; background:var(--panel2); border:1px solid var(--line); color:var(--ink);
-              border-radius:12px; padding:12px; cursor:pointer; transition:.12s; }
-  .scenario:hover { border-color:var(--accent); transform:translateY(-1px); }
-  .scenario.active { border-color:var(--accent); background:#173127; }
+  .scenario { text-align:left; background:var(--sheet); border:1px solid var(--line); color:var(--ink);
+              border-radius:8px; padding:12px; cursor:pointer; transition:.12s; }
+  .scenario:hover { border-color:var(--demand); transform:translateY(-1px); }
+  .scenario.active { border-color:var(--demand); background:var(--demand-soft); }
   .scenario b { display:block; font-size:14px; margin-bottom:3px; }
   .scenario small { color:var(--muted); font-size:12px; line-height:1.3; }
-  label { display:block; font-size:13px; color:var(--muted); margin:12px 0 5px; font-weight:600; }
+  label { display:block; font-size:13px; color:var(--soft); margin:12px 0 5px; font-weight:600; }
   .subhead { font-size:11.5px; text-transform:uppercase; letter-spacing:.07em; color:var(--muted);
              font-weight:700; margin:18px 0 4px; padding-top:14px; border-top:1px solid var(--line); }
   input, textarea, select {
-    width:100%; padding:11px 12px; background:var(--panel2); border:1px solid var(--line);
-    border-radius:10px; color:var(--ink); font-size:15px; font-family:inherit; }
-  input:focus, textarea:focus, select:focus { outline:none; border-color:var(--accent);
-    box-shadow:0 0 0 3px rgba(25,195,125,.18); }
+    width:100%; padding:11px 12px; background:var(--field); border:1px solid var(--line);
+    border-radius:8px; color:var(--ink); font-size:15px; font-family:inherit; }
+  input:focus, textarea:focus, select:focus { outline:none; border-color:var(--demand);
+    box-shadow:0 0 0 3px rgba(194,54,43,.15); }
   textarea { min-height:84px; resize:vertical; }
   .row2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-  .btn { width:100%; padding:14px; border:none; border-radius:12px; font-size:16px; font-weight:700;
-         cursor:pointer; background:var(--accent); color:#04210f;
+  .btn { width:100%; padding:14px; border:none; border-radius:8px; font-size:16px; font-weight:700;
+         cursor:pointer; background:var(--ink); color:#fbf7ec;
          transition:background .12s, transform .08s, box-shadow .12s;
-         box-shadow:0 6px 16px -6px rgba(25,195,125,.5); }
-  .btn:hover { background:#1ed98c; }
+         box-shadow:0 6px 16px -8px rgba(21,34,58,.5); }
+  .btn:hover { background:#21314f; }
   .btn:active { transform:translateY(1px); }
   .btn:disabled { opacity:.5; cursor:default; box-shadow:none; }
-  .btn.gold { box-shadow:0 8px 20px -6px rgba(245,183,64,.5); }
-  .btn.ghost { background:transparent; border:1px solid var(--line); color:var(--ink); }
-  .btn.gold { background:linear-gradient(135deg,var(--gold),#e09a14); color:#3a2600; }
+  .btn.ghost { background:transparent; border:1.5px solid var(--ink); color:var(--ink); box-shadow:none; }
+  .btn.gold { background:var(--demand); color:#fff; box-shadow:0 8px 20px -8px rgba(194,54,43,.55); }
+  .btn.gold:hover { background:#d2402f; }
   .hidden { display:none !important; }
   .muted { color:var(--muted); font-size:13px; }
-  .lever { background:#10231b; border:1px solid #1f5e43; border-radius:10px; padding:12px;
-           font-size:13px; color:#bdf0d6; line-height:1.45; margin:14px 0; }
-  .lever b { color:var(--accent); }
-  .letter { white-space:pre-wrap; font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;
-            font-size:13.5px; line-height:1.6; background:#0e1419; border:1px solid var(--line);
-            border-radius:12px; padding:16px; color:#dce8ef; }
+  .lever { background:var(--demand-soft); border:1px solid #ecccc5; border-left:4px solid var(--demand);
+           border-radius:6px; padding:12px 14px; font-size:13px; color:#3c2a27; line-height:1.5; margin:14px 0; }
+  .lever b { color:var(--demand); }
+  .letter { white-space:pre-wrap; font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+            font-size:13px; line-height:1.65; background:#fdfdfb; border:1px solid var(--line);
+            border-radius:4px; padding:18px; color:#1c2433; }
   .fade { position:relative; }
   .fade::after { content:""; position:absolute; left:0; right:0; bottom:0; height:120px;
-                 background:linear-gradient(transparent, var(--panel)); pointer-events:none; }
+                 background:linear-gradient(transparent, var(--sheet)); pointer-events:none; }
   .paywall { text-align:center; padding:6px 4px 2px; }
   .paywall-lead { font-size:13.5px; color:var(--ink); line-height:1.5; margin:14px 6px 12px; }
-  .price { font-size:34px; font-weight:800; letter-spacing:-.02em; }
+  .price { font-size:34px; font-weight:800; letter-spacing:-.02em; color:var(--ink); }
   .price small { font-size:14px; color:var(--muted); font-weight:600; }
   .ticks { list-style:none; padding:0; margin:12px 0 16px; }
   .ticks li { font-size:13.5px; color:var(--ink); padding:4px 0; }
-  .ticks li::before { content:"✓ "; color:var(--accent); font-weight:800; }
-  .msg { font-size:13.5px; padding:10px 12px; border-radius:10px; margin:12px 0; }
-  .msg.err { background:#2a1414; color:#ffb3b3; border:1px solid #5e2020; }
-  .msg.ok  { background:#10231b; color:#bdf0d6; border:1px solid #1f5e43; }
+  .ticks li::before { content:"✓ "; color:var(--demand); font-weight:800; }
+  .msg { font-size:13.5px; padding:10px 12px; border-radius:8px; margin:12px 0; }
+  .msg.err { background:#fbe7e3; color:#9a2820; border:1px solid #efc9c1; }
+  .msg.ok  { background:#e8eff8; color:#26456f; border:1px solid #cdddf0; }
   .actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; }
-  .demo-badge { display:inline-block; background:#332100; color:var(--gold); border:1px solid #5e4410;
-                font-size:11px; padding:2px 8px; border-radius:999px; font-weight:700; }
-  .spin { display:inline-block; width:15px;height:15px;border:2px solid rgba(4,33,15,.3);
-          border-top-color:#04210f;border-radius:50%;animation:s .7s linear infinite;vertical-align:-2px;}
+  .demo-badge { display:inline-block; background:#fff; color:var(--demand); border:1px solid var(--demand);
+                font-size:11px; padding:2px 8px; border-radius:999px; font-weight:700;
+                font-family:ui-monospace,Menlo,Consolas,monospace; text-transform:uppercase; letter-spacing:.05em; }
+  .spin { display:inline-block; width:15px;height:15px;border:2px solid rgba(255,255,255,.4);
+          border-top-color:#fff;border-radius:50%;animation:s .7s linear infinite;vertical-align:-2px;}
   @keyframes s { to { transform:rotate(360deg);} }
   footer { color:var(--muted); font-size:12px; text-align:center; margin-top:8px; line-height:1.6;}
-  @media (max-width:520px){ .grid{grid-template-columns:1fr;} .steps{grid-template-columns:1fr;} .hero h1{font-size:26px;} }
+  @media (max-width:520px){ .grid{grid-template-columns:1fr;} .steps{grid-template-columns:1fr;} .hero h1{font-size:28px;}
+    .stamp{ position:static; display:inline-block; transform:rotate(-3deg); margin:10px 0 4px; } }
   @media print { body{background:#fff;color:#000;} .noprint{display:none!important;}
-    .letter{border:none;color:#000;background:#fff;font-size:12px;} .wrap{max-width:100%;} }
+    .letter{border:1px solid #ccc;color:#000;background:#fff;font-size:12px;} .wrap{max-width:100%;} }
 </style>
 </head>
 <body>
@@ -149,6 +148,8 @@
   </header>
 
   <section class="hero noprint">
+    <div class="stamp">Notice of<br>Demand</div>
+    <div class="eyebrow">Re: the money they owe you</div>
     <h1>Someone owes you money.<br><span>Let's get it back.</span></h1>
     <p>A delayed flight, a junk bank fee, a faulty product they won't refund — they're
        counting on you to give up. Clawback writes the demand letter that cites the
@@ -259,7 +260,7 @@ function track(name, extra){
 // users who prefer reduced motion (accessibility + good taste).
 function celebrate(){
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  const colors = ['#19c37d','#f5b740','#bdf0d6','#1ed98c','#ffffff'];
+  const colors = ['#c2362b','#26456f','#d9b44a','#16233b','#8a1f17'];
   const root = document.createElement('div'); root.className = 'confetti-root';
   document.body.appendChild(root);
   for (let i=0;i<70;i++){
@@ -448,26 +449,28 @@ function makeShareCard(){
   const W = 1080, H = 1350, c = document.createElement('canvas');
   c.width = W; c.height = H;
   const x = c.getContext('2d');
-  const g = x.createLinearGradient(0, 0, W, H);
-  g.addColorStop(0, '#16303f'); g.addColorStop(1, '#0c1116');
-  x.fillStyle = g; x.fillRect(0, 0, W, H);
-  const M = 96;
-  x.fillStyle = '#19c37d'; x.fillRect(M, 150, 96, 14);                 // accent bar
-  x.fillStyle = '#eef4f8'; x.textBaseline = 'alphabetic';
-  x.font = '800 64px -apple-system,Segoe UI,Arial';
-  x.fillText("I'm done asking.", M, 290);
-  x.fillText("I'm demanding it.", M, 366);
+  // Document paper + a red "official notice" frame — the share card IS a demand.
+  x.fillStyle = '#efe8d6'; x.fillRect(0, 0, W, H);
+  x.strokeStyle = '#c2362b'; x.lineWidth = 9;
+  x.strokeRect(44, 44, W - 88, H - 88);
+  const M = 100;
+  x.textBaseline = 'alphabetic';
+  x.fillStyle = '#c2362b'; x.font = '700 30px ui-monospace, Menlo, monospace';
+  x.fillText('N O T I C E   O F   D E M A N D', M, 180);
+  x.fillStyle = '#16233b'; x.font = '800 66px -apple-system,Segoe UI,Arial';
+  x.fillText("I'm done asking.", M, 320);
+  x.fillText("I'm demanding it.", M, 398);
   if (req.amount){                                                     // the personal hook
-    x.fillStyle = '#19c37d'; x.font = '800 150px -apple-system,Segoe UI,Arial';
-    x.fillText(fitText(x, req.amount, W - M*2), M, 600);
+    x.fillStyle = '#c2362b'; x.font = '800 150px -apple-system,Segoe UI,Arial';
+    x.fillText(fitText(x, req.amount, W - M*2), M, 630);
   }
-  x.fillStyle = '#94a6b4'; x.font = '600 42px -apple-system,Segoe UI,Arial';
-  if (req.company) x.fillText('from ' + fitText(x, req.company, W - M*2 - 130), M, 690);
-  x.fillText('backed by the ' + (LAW_LABEL[req.region] || 'consumer law'), M, 754);
-  x.fillStyle = '#cbd6df'; x.font = '500 38px -apple-system,Segoe UI,Arial';
+  x.fillStyle = '#4a5260'; x.font = '600 42px -apple-system,Segoe UI,Arial';
+  if (req.company) x.fillText('from ' + fitText(x, req.company, W - M*2 - 130), M, 720);
+  x.fillText('backed by the ' + (LAW_LABEL[req.region] || 'consumer law'), M, 784);
+  x.fillStyle = '#6c7280'; x.font = '500 38px -apple-system,Segoe UI,Arial';
   x.fillText('A firm demand letter, in 60 seconds.', M, 1180);
-  x.fillStyle = '#19c37d'; x.font = '800 46px -apple-system,Segoe UI,Arial';
-  x.fillText('⟲ Clawback', M, 1245);
+  x.fillStyle = '#c2362b'; x.font = '800 46px -apple-system,Segoe UI,Arial';
+  x.fillText('⟲ Clawback', M, 1248);
   return c;
 }
 
