@@ -48,6 +48,9 @@ What's in place, and what production still needs:
   (`CLAWBACK_RATE_LIMIT`/`CLAWBACK_RATE_WINDOW`, default 60/min → 429) — the
   sliding window avoids the fixed-window boundary burst (2×limit across a window
   edge). It's per-process — move it to Redis for a multi-worker deployment.
+  Behind a reverse proxy/CDN, set `CLAWBACK_TRUST_PROXY=1` so it keys on the
+  real client IP (`X-Forwarded-For`) instead of the proxy — off by default
+  because that header is spoofable when not behind a trusted proxy.
 - **Input validation.** Every request field is length-capped (and
   `deadline_days` range-checked), so oversized payloads can't exhaust memory
   or inflate LLM cost. No SQL injection surface (no DB); user text renders via

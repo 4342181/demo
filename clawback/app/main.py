@@ -76,6 +76,11 @@ async def unhandled_exception(request: Request, exc: Exception):
 # production deployment should move this to a shared store like Redis.
 RATE_LIMIT = int(os.environ.get("CLAWBACK_RATE_LIMIT", "60"))     # requests…
 RATE_WINDOW = int(os.environ.get("CLAWBACK_RATE_WINDOW", "60"))   # …per window (s)
+# Behind a reverse proxy/CDN, request.client.host is the proxy — which would
+# put every user in one rate-limit bucket. Enable this ONLY when deployed
+# behind a trusted proxy that sets X-Forwarded-For (the header is spoofable, so
+# off by default to avoid letting attackers forge their source IP).
+TRUST_PROXY = os.environ.get("CLAWBACK_TRUST_PROXY", "").lower() in ("1", "true", "yes")
 _rate_lock = threading.Lock()
 # Sliding-window counter: ip -> [window_index, count_this_window, count_prev_window].
 # A plain fixed window lets a client burst the full limit at the end of one
@@ -111,10 +116,20 @@ def _rate_check(ip: str, now: float) -> bool:
     return True
 
 
+def _client_ip(request: Request) -> str:
+    """The IP to rate-limit on. Uses the real client IP from X-Forwarded-For
+    only when explicitly trusted (TRUST_PROXY); otherwise the socket peer."""
+    if TRUST_PROXY:
+        fwd = request.headers.get("x-forwarded-for", "")
+        if fwd:
+            return fwd.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
 @app.middleware("http")
 async def rate_limit(request: Request, call_next):
     if request.url.path.startswith("/api/"):
-        ip = request.client.host if request.client else "unknown"
+        ip = _client_ip(request)
         now = time.time()
         global _last_prune
         with _rate_lock:

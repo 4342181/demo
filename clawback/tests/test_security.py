@@ -59,6 +59,19 @@ def test_sliding_window_blocks_boundary_burst():
     assert allowed_end + allowed_start <= 100 + 5  # ≈ one window's worth, not two
 
 
+def test_client_ip_only_trusts_proxy_header_when_enabled():
+    """X-Forwarded-For must be ignored by default (spoofable) and used only
+    when TRUST_PROXY is on — otherwise the rate-limit key could be forged."""
+    from types import SimpleNamespace
+    req = SimpleNamespace(headers={"x-forwarded-for": "9.9.9.9, 10.0.0.1"},
+                          client=SimpleNamespace(host="1.1.1.1"))
+    m.TRUST_PROXY = False
+    assert m._client_ip(req) == "1.1.1.1"      # ignores the spoofable header
+    m.TRUST_PROXY = True
+    assert m._client_ip(req) == "9.9.9.9"      # first hop, when explicitly trusted
+    m.TRUST_PROXY = False
+
+
 def test_rate_limiter_prunes_stale_ips_only():
     """Memory bound: stale IPs are dropped, but current/previous-window
     entries (still used by the sliding window) are kept."""
