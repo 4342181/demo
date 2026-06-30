@@ -35,6 +35,14 @@
     .card, .btn, input, textarea, select, .scenario, .letter, .lever, .msg,
     .trust span, .steps .s, .logo, .step-num, .price small { corner-shape: squircle; }
   }
+  /* Frosted-glass cards where supported (visionOS-style depth). Kept subtle —
+     72% panel + a modest blur — so text contrast and the trustworthy feel
+     aren't traded for flash. Degrades to the solid panel otherwise. */
+  @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .card { background: rgba(20,28,36,0.72);
+            -webkit-backdrop-filter: blur(18px) saturate(120%);
+            backdrop-filter: blur(18px) saturate(120%); }
+  }
   /* Emotional peak: a brief, tasteful confetti burst when the letter unlocks. */
   .confetti-root { position:fixed; inset:0; pointer-events:none; overflow:hidden; z-index:60; }
   .confetti { position:absolute; top:-14px; border-radius:2px;
