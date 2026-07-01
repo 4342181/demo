@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Clawback — get your money back</title>
+<meta name="description" content="Turn a 60-second form into a professional demand letter that cites the right consumer law for your country. Free preview, then unlock.">
+<!-- Trust signals: a real favicon, themed browser chrome, and clean social previews for shared links. -->
+<link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='10' fill='%23c2362b'/><text x='32' y='46' font-size='40' text-anchor='middle' fill='%23ffffff' font-family='Arial' font-weight='bold'>C</text></svg>">
+<meta name="theme-color" content="#efe8d6">
+<meta property="og:title" content="Clawback — get your money back">
+<meta property="og:description" content="A firm demand letter that cites the exact consumer law on your side — in 60 seconds. See it free.">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
+<style>
+  /* "Notice of Demand" — identity grounded in the subject: official consumer
+     demand letters. Document paper, ink navy, a single demand-red accent used
+     like a rubber stamp, typewriter mono for anything that reads as legal.
+     Signature element: the rotated NOTICE OF DEMAND stamp on the hero. */
+  :root {
+    --paper:#efe8d6; --sheet:#ffffff; --field:#fcfbf6;
+    --ink:#16233b; --muted:#6c7280; --soft:#4a5260;
+    --line:#e2dbc8; --demand:#c2362b; --demand-soft:#f5e4e0; --seal:#26456f;
+    --accent:var(--demand); --gold:var(--demand);
+    --radius:9px;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+         background-color:var(--paper);
+         background-image:repeating-linear-gradient(transparent 0 35px, rgba(38,69,111,.06) 35px 36px);
+         color:var(--ink); min-height:100vh; letter-spacing:-.002em; accent-color:var(--demand);
+         -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; text-rendering:optimizeLegibility; }
+  a { color:var(--seal); }
+  :where(button,a,input,textarea,select):focus-visible { outline:2px solid var(--demand); outline-offset:2px; }
+  h1, .step-label { text-wrap:balance; }
+  @media (prefers-reduced-motion: reduce){ * { animation:none!important; transition:none!important; } }
+  .confetti-root { position:fixed; inset:0; pointer-events:none; overflow:hidden; z-index:60; }
+  .confetti { position:absolute; top:-14px; border-radius:1px; animation:confetti-fall linear forwards; }
+  @keyframes confetti-fall { to { transform:translateY(108vh) rotate(600deg); opacity:.85; } }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)}
+    40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} }
+  .shake { animation:shake .4s ease; }
+  .wrap { max-width:660px; margin:0 auto; padding:20px 16px 64px; }
+  header.top { display:flex; align-items:center; gap:10px; padding:6px 2px 12px;
+               border-bottom:2px solid var(--ink); margin-bottom:4px; }
+  .logo { width:34px; height:34px; border-radius:6px; background:var(--demand); color:#fff;
+          display:flex; align-items:center; justify-content:center; font-size:19px; font-weight:800; }
+  .brand { font-weight:800; font-size:20px; letter-spacing:-.02em; color:var(--ink); }
+  .tag { color:var(--muted); font-size:11px; margin-left:auto; text-align:right;
+         font-family:ui-monospace,Menlo,Consolas,monospace; text-transform:uppercase; letter-spacing:.04em; }
+  .hero { position:relative; }
+  .eyebrow { font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12px; letter-spacing:.16em;
+             text-transform:uppercase; color:var(--demand); font-weight:700; margin:16px 0 8px; }
+  .stamp { position:absolute; top:8px; right:2px; transform:rotate(-9deg);
+           border:3px double var(--demand); color:var(--demand); opacity:.7;
+           font-family:ui-monospace,Menlo,Consolas,monospace; font-weight:800; font-size:12.5px;
+           letter-spacing:.1em; text-transform:uppercase; padding:6px 10px; border-radius:3px;
+           line-height:1.18; text-align:center; }
+  .hero h1 { font-size:33px; line-height:1.08; letter-spacing:-.03em; margin:2px 0 12px; color:var(--ink); }
+  .hero h1 span { color:var(--demand); }
+  .hero p { color:var(--soft); font-size:15px; line-height:1.55; margin:0 0 16px; }
+  .trust { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 18px; }
+  .trust span { font-size:12.5px; color:var(--ink); background:var(--sheet);
+                border:1px solid var(--line); border-radius:999px; padding:5px 11px; }
+  .trust b { color:var(--demand); font-weight:800; }
+  .steps { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:0 0 22px; }
+  .steps .s { background:var(--sheet); border:1px solid var(--line); border-radius:9px; padding:13px; }
+  .steps .s i { font-style:normal; display:inline-flex; width:22px; height:22px; border-radius:5px;
+                background:var(--demand); color:#fff; font-weight:800; font-size:12px;
+                align-items:center; justify-content:center; margin-bottom:9px; }
+  .steps .s b { display:block; font-size:13.5px; margin-bottom:3px; color:var(--ink); }
+  .steps .s small { color:var(--muted); font-size:12px; line-height:1.36; }
+  .card { background:var(--sheet); border:1px solid var(--line); border-radius:var(--radius);
+          padding:20px; margin-bottom:16px;
+          box-shadow:0 1px 2px rgba(21,34,58,.04), 0 16px 30px -20px rgba(21,34,58,.34); }
+  .step-label { font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--muted);
+                font-weight:700; margin-bottom:10px; display:flex; align-items:center; gap:8px;}
+  .step-num { width:20px;height:20px;border-radius:5px;background:var(--demand);color:#fff;
+              display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;}
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .scenario { text-align:left; background:var(--sheet); border:1px solid var(--line); color:var(--ink);
+              border-radius:8px; padding:12px; cursor:pointer; transition:.12s; }
+  .scenario:hover { border-color:var(--demand); transform:translateY(-1px); }
+  .scenario.active { border-color:var(--demand); background:var(--demand-soft); }
+  .scenario b { display:block; font-size:14px; margin-bottom:3px; }
+  .scenario small { color:var(--muted); font-size:12px; line-height:1.3; }
+  label { display:block; font-size:13px; color:var(--soft); margin:12px 0 5px; font-weight:600; }
+  .subhead { font-size:11.5px; text-transform:uppercase; letter-spacing:.07em; color:var(--muted);
+             font-weight:700; margin:18px 0 4px; padding-top:14px; border-top:1px solid var(--line); }
+  input, textarea, select {
+    width:100%; padding:11px 12px; background:var(--field); border:1px solid var(--line);
+    border-radius:8px; color:var(--ink); font-size:15px; font-family:inherit; }
+  input:focus, textarea:focus, select:focus { outline:none; border-color:var(--demand);
+    box-shadow:0 0 0 3px rgba(194,54,43,.15); }
+  textarea { min-height:84px; resize:vertical; }
+  .row2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .btn { width:100%; padding:14px; border:none; border-radius:8px; font-size:16px; font-weight:700;
+         cursor:pointer; background:var(--ink); color:#fbf7ec;
+         transition:background .12s, transform .08s, box-shadow .12s;
+         box-shadow:0 6px 16px -8px rgba(21,34,58,.5); }
+  .btn:hover { background:#21314f; }
+  .btn:active { transform:translateY(1px); }
+  .btn:disabled { opacity:.5; cursor:default; box-shadow:none; }
+  .btn.ghost { background:transparent; border:1.5px solid var(--ink); color:var(--ink); box-shadow:none; }
+  .btn.gold { background:var(--demand); color:#fff; box-shadow:0 8px 20px -8px rgba(194,54,43,.55); }
+  .btn.gold:hover { background:#d2402f; }
+  .hidden { display:none !important; }
+  .muted { color:var(--muted); font-size:13px; }
+  .lever { background:var(--demand-soft); border:1px solid #ecccc5; border-left:4px solid var(--demand);
+           border-radius:6px; padding:12px 14px; font-size:13px; color:#3c2a27; line-height:1.5; margin:14px 0; }
+  .lever b { color:var(--demand); }
+  .letter { white-space:pre-wrap; font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+            font-size:13px; line-height:1.65; background:#fdfdfb; border:1px solid var(--line);
+            border-radius:4px; padding:18px; color:#1c2433; }
+  .fade { position:relative; }
+  .fade::after { content:""; position:absolute; left:0; right:0; bottom:0; height:120px;
+                 background:linear-gradient(transparent, var(--sheet)); pointer-events:none; }
+  .paywall { text-align:center; padding:6px 4px 2px; }
+  .paywall-lead { font-size:13.5px; color:var(--ink); line-height:1.5; margin:14px 6px 12px; }
+  .price { font-size:34px; font-weight:800; letter-spacing:-.02em; color:var(--ink); }
+  .price small { font-size:14px; color:var(--muted); font-weight:600; }
+  .ticks { list-style:none; padding:0; margin:12px 0 16px; }
+  .ticks li { font-size:13.5px; color:var(--ink); padding:4px 0; }
+  .ticks li::before { content:"✓ "; color:var(--demand); font-weight:800; }
+  .msg { font-size:13.5px; padding:10px 12px; border-radius:8px; margin:12px 0; }
+  .msg.err { background:#fbe7e3; color:#9a2820; border:1px solid #efc9c1; }
+  .msg.ok  { background:#e8eff8; color:#26456f; border:1px solid #cdddf0; }
+  .actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; }
+  .demo-badge { display:inline-block; background:#fff; color:var(--demand); border:1px solid var(--demand);
+                font-size:11px; padding:2px 8px; border-radius:999px; font-weight:700;
+                font-family:ui-monospace,Menlo,Consolas,monospace; text-transform:uppercase; letter-spacing:.05em; }
+  .spin { display:inline-block; width:15px;height:15px;border:2px solid rgba(255,255,255,.4);
+          border-top-color:#fff;border-radius:50%;animation:s .7s linear infinite;vertical-align:-2px;}
+  @keyframes s { to { transform:rotate(360deg);} }
+  footer { color:var(--muted); font-size:12px; text-align:center; margin-top:8px; line-height:1.6;}
+  @media (max-width:520px){ .grid{grid-template-columns:1fr;} .steps{grid-template-columns:1fr;} .hero h1{font-size:28px;}
+    .stamp{ position:static; display:inline-block; transform:rotate(-3deg); margin:10px 0 4px; } }
+  @media print { body{background:#fff;color:#000;} .noprint{display:none!important;}
+    .letter{border:1px solid #ccc;color:#000;background:#fff;font-size:12px;} .wrap{max-width:100%;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top noprint">
+    <div class="logo">⟲</div>
+    <div class="brand">Clawback</div>
+    <div class="tag">Demand letters that cite<br>the law on your side</div>
+  </header>
+
+  <section class="hero noprint">
+    <div class="stamp">Notice of<br>Demand</div>
+    <div class="eyebrow">Re: the money they owe you</div>
+    <h1>Someone owes you money.<br><span>Let's get it back.</span></h1>
+    <p>A delayed flight, a junk bank fee, a faulty product they won't refund — they're
+       counting on you to give up. Clawback writes the demand letter that cites the
+       <b>exact law on your side</b>. See it free, then send it.</p>
+    <div class="trust">
+      <span><b>✓</b> No account needed</span>
+      <span><b>✓</b> See the letter free</span>
+      <span><b>✓</b> Cites real consumer law</span>
+    </div>
+    <div class="steps">
+      <div class="s"><i>1</i><b>Tell us what happened</b><small>Pick the problem, fill a 60-second form.</small></div>
+      <div class="s"><i>2</i><b>We cite the exact law</b><small>The specific rule for your country, a hard deadline, an escalation path.</small></div>
+      <div class="s"><i>3</i><b>Send it</b><small>Unlock the full letter, then copy, download, or print to PDF.</small></div>
+    </div>
+  </section>
+
+  <!-- STEP 1: scenario -->
+  <div class="card noprint" id="card-scenario">
+    <div class="step-label"><span class="step-num">1</span> What happened?</div>
+    <div class="grid" id="scenario-grid"></div>
+  </div>
+
+  <!-- STEP 2: details -->
+  <div class="card noprint hidden" id="card-details">
+    <div class="step-label"><span class="step-num">2</span> The details</div>
+    <p class="muted" style="margin:0 0 6px;">Only the company is required — everything else just sharpens the letter.</p>
+    <label>Where are you (which consumer law applies)?</label>
+    <select id="region"></select>
+    <div id="fields"></div>
+    <label>Anything else? (what happened, in your words — optional)</label>
+    <textarea id="facts" placeholder="e.g. I called twice and was promised a callback that never came."></textarea>
+    <div class="subhead">Your contact details</div>
+    <div class="row2">
+      <div><label>Your name</label><input id="sender_name" placeholder="e.g. T. Ephraim"></div>
+      <div><label>Your email / phone</label><input id="sender_contact" placeholder="how they reply"></div>
+    </div>
+    <label>Give them how long to respond?</label>
+    <select id="deadline_days">
+      <option value="7">7 days (firm)</option>
+      <option value="14" selected>14 days (standard)</option>
+      <option value="21">21 days (lenient)</option>
+    </select>
+    <div id="form-msg"></div>
+    <button class="btn" id="preview-btn" style="margin-top:14px;">Write my letter — free preview</button>
+  </div>
+
+  <!-- STEP 3: preview + paywall -->
+  <div class="card noprint hidden" id="card-preview">
+    <div class="step-label"><span class="step-num">3</span> Your letter</div>
+    <div class="lever" id="lever"></div>
+    <div class="fade"><div class="letter" id="preview-text"></div></div>
+    <div class="paywall">
+      <p class="paywall-lead">The preview makes your case. What's locked is the part that gets results — your exact demand, the dated deadline, and the named escalation. Two minutes from sent.</p>
+      <p class="muted" id="hidden-note" style="margin:0 0 8px;"></p>
+      <div class="price" id="price-tag">R49 <small>one-off</small></div>
+      <ul class="ticks">
+        <li>The complete letter, personalised and ready to send</li>
+        <li>Your firm deadline and escalation path filled in</li>
+        <li>Copy, download, or print to PDF</li>
+      </ul>
+      <button class="btn gold" id="unlock-btn">Finish my letter →</button>
+      <p class="muted" id="pay-mode-note" style="margin-top:10px;"></p>
+      <button class="btn ghost noprint" id="share-preview-btn" style="margin-top:12px;">🔥 Share what you're claiming</button>
+    </div>
+  </div>
+
+  <!-- STEP 4: unlocked -->
+  <div class="card hidden" id="card-full">
+    <div class="step-label noprint"><span class="step-num">✓</span> Unlocked — ready to send</div>
+    <div id="full-msg"></div>
+    <div class="letter" id="full-text"></div>
+    <button class="btn noprint" id="email-btn" style="margin-bottom:6px;">✉️ Send by email</button>
+    <p class="muted noprint" style="margin:0 0 12px; text-align:center;">Opens your email ready to send — just add the company's complaints address. Keep a copy; if they miss your deadline, escalate to the body named in the letter.</p>
+    <div class="actions noprint">
+      <button class="btn ghost" id="copy-btn">Copy text</button>
+      <button class="btn ghost" id="print-btn">Print / PDF</button>
+    </div>
+    <button class="btn ghost noprint" id="download-btn" style="margin-top:10px;">Download .txt</button>
+    <div id="done-nudge" class="hidden noprint" style="margin-top:16px; text-align:center;">
+      <p class="muted" style="margin:0 0 8px;">📨 That's yours to send. Help the next person fighting the same thing — share your win.</p>
+      <button class="btn" id="share-done-btn">🔥 Share your win</button>
+    </div>
+    <button class="btn ghost noprint" id="restart-btn" style="margin-top:10px;">Start another letter</button>
+  </div>
+
+  <footer class="noprint">
+    Clawback writes self-help letters from publicly available consumer-protection principles.
+    It is not a law firm and this is not legal advice.<br>© Clawback
+  </footer>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+let CONFIG = null, state = { scenario:null, region:"za" };
+
+function msg(el, text, kind){ el.innerHTML = text ? `<div class="msg ${kind}">${text}</div>` : ""; }
+
+// Fire-and-forget funnel analytics — never blocks the UI, never sends PII
+// (only the event name + category labels; never the user's typed details).
+function track(name, extra){
+  try {
+    fetch('/api/event', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({name, ...extra})});
+  } catch(e) {}
+}
+
+// A short, tasteful confetti burst for the win moment. Skipped entirely for
+// users who prefer reduced motion (accessibility + good taste).
+function celebrate(){
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const colors = ['#c2362b','#26456f','#d9b44a','#16233b','#8a1f17'];
+  const root = document.createElement('div'); root.className = 'confetti-root';
+  document.body.appendChild(root);
+  for (let i=0;i<70;i++){
+    const p = document.createElement('span'); p.className = 'confetti';
+    const size = 6 + Math.random()*6;
+    p.style.left = Math.random()*100 + 'vw';
+    p.style.width = size + 'px'; p.style.height = (size*0.5 + 3) + 'px';
+    p.style.background = colors[i % colors.length];
+    p.style.animationDelay = (Math.random()*0.25) + 's';
+    p.style.animationDuration = (1.5 + Math.random()*1.3) + 's';
+    root.appendChild(p);
+  }
+  setTimeout(() => root.remove(), 3400);
+}
+
+async function boot(){
+  CONFIG = await (await fetch('/api/config')).json();
+  // scenarios
+  const grid = $('#scenario-grid');
+  grid.innerHTML = '';
+  for (const [key, s] of Object.entries(CONFIG.scenarios)){
+    const b = document.createElement('button');
+    b.className = 'scenario'; b.dataset.key = key;
+    b.innerHTML = `<b>${s.label}</b><small>${s.blurb}</small>`;
+    b.onclick = () => pickScenario(key);
+    grid.appendChild(b);
+  }
+  // regions
+  const reg = $('#region'); reg.innerHTML = '';
+  for (const [key, label] of Object.entries(CONFIG.regions)){
+    const o = document.createElement('option'); o.value = key; o.textContent = label;
+    if (key === 'za') o.selected = true;
+    reg.appendChild(o);
+  }
+  reg.onchange = () => state.region = reg.value;
+  $('#price-tag').innerHTML = `${CONFIG.price} <small>one-off</small>`;
+  if (!CONFIG.payments_live) $('#pay-mode-note').innerHTML =
+    '<span class="demo-badge">FREE BETA</span> No card needed right now — unlock free while we finish setting up payments.';
+  else $('#pay-mode-note').innerHTML =
+    '🔒 Secure checkout — your card is handled by Stripe. We never see or store it.';
+  // returning from a real Stripe checkout?
+  // Deep-link prefill: SEO/share links (e.g. ?scenario=flight&company=SkyHigh)
+  // drop the user straight into the core loop — first value in seconds, no
+  // setup. A fully-specified link lands them directly on their letter.
+  const q = new URLSearchParams(location.search);
+  const qs = q.get('scenario');
+  if (qs && CONFIG.scenarios[qs]){
+    pickScenario(qs);
+    const qr = q.get('region');
+    if (qr && CONFIG.regions[qr]){ $('#region').value = qr; state.region = qr; }
+    const setF = (name, val) => { const el = $('#f_' + name); if (el && val) el.value = val; };
+    setF('company', q.get('company')); setF('amount', q.get('amount'));
+    if ((q.get('company') || '').trim()) generatePreview();  // fully-specified → instant letter
+  }
+
+  const paid = q.get('paid');
+  if (paid && sessionStorage.getItem('cb_req')) resumeAfterPayment(paid);
+  track('view');
+}
+
+function pickScenario(key){
+  state.scenario = key;
+  track('scenario_selected', {scenario:key});
+  document.querySelectorAll('.scenario').forEach(el =>
+    el.classList.toggle('active', el.dataset.key === key));
+  // render fields
+  const wrap = $('#fields'); wrap.innerHTML = '';
+  for (const f of CONFIG.scenarios[key].fields){
+    const required = (f.name === 'company');
+    const lab = document.createElement('label');
+    // Smarter friction: mark the one required field, and label the rest
+    // optional so the form doesn't feel heavier than it is.
+    lab.innerHTML = f.label + (required
+      ? ' <span style="color:var(--accent)">*</span>'
+      : ' <span style="font-weight:400;color:var(--muted)">· optional</span>');
+    const inp = document.createElement('input'); inp.id = 'f_' + f.name;
+    inp.placeholder = f.placeholder || '';
+    if (required) inp.setAttribute('aria-required', 'true');
+    wrap.appendChild(lab); wrap.appendChild(inp);
+  }
+  $('#card-details').classList.remove('hidden');
+  $('#card-details').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function collect(){
+  const req = {
+    scenario: state.scenario, region: $('#region').value,
+    facts: $('#facts').value, sender_name: $('#sender_name').value,
+    sender_contact: $('#sender_contact').value,
+    deadline_days: parseInt($('#deadline_days').value),
+  };
+  for (const f of CONFIG.scenarios[state.scenario].fields){
+    req[f.name] = ($('#f_' + f.name)||{}).value || '';
+  }
+  return req;
+}
+
+async function generatePreview(){
+  if (!state.scenario){ msg($('#form-msg'),'Pick what happened first.','err'); return; }
+  const req = collect();
+  // The one bit of friction worth keeping: a letter to "[Company name]" is
+  // useless, so require who it's to before we generate.
+  if (!(req.company || '').trim()){
+    msg($('#form-msg'), 'Add who this is to (the company) — everything else is optional.', 'err');
+    const el = $('#f_company');
+    if (el){
+      el.focus();
+      el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake');  // restart the animation
+      setTimeout(() => el.classList.remove('shake'), 450);
+    }
+    if (navigator.vibrate) navigator.vibrate(25);  // subtle haptic "edge" on supported devices
+    return;
+  }
+  const btn = $('#preview-btn'); btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Writing…';
+  msg($('#form-msg'),'','');
+  try{
+    sessionStorage.setItem('cb_req', JSON.stringify(req));
+    const r = await fetch('/api/preview', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(req)});
+    const d = await r.json();
+    $('#lever').innerHTML = `<b>Your legal lever:</b> ${d.lever_note}`;
+    $('#preview-text').textContent = d.preview;
+    const amt = req.amount ? `your ${req.amount} demand` : 'your full demand';
+    const who = req.company ? ` you'll report ${req.company} to` : '';
+    $('#hidden-note').textContent =
+      `Locked: ${amt}, the ${d.deadline} deadline, and the escalation path${who}.`;
+    $('#card-preview').classList.remove('hidden');
+    $('#card-preview').scrollIntoView({behavior:'smooth', block:'start'});
+    track('preview_generated', {scenario: req.scenario, region: req.region});
+  }catch(e){ msg($('#form-msg'), 'Something went wrong. Try again.','err'); }
+  btn.disabled = false; btn.textContent = 'Write my letter — free preview';
+}
+$('#preview-btn').onclick = generatePreview;
+
+$('#unlock-btn').onclick = async () => {
+  track('unlock_clicked');
+  const btn = $('#unlock-btn'); btn.disabled = true; btn.innerHTML = '<span class="spin"></span> …';
+  try{
+    const req = JSON.parse(sessionStorage.getItem('cb_req'));
+    const r = await fetch('/api/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(req)});
+    const d = await r.json();
+    if (d.mode === 'stripe'){ location.href = d.checkout_url; return; }
+    // demo mode: we got a token, reveal immediately
+    await revealFull(req, d.token);
+  }catch(e){ btn.disabled=false; btn.textContent='Unlock my letter →'; }
+};
+
+async function resumeAfterPayment(sessionId){
+  const req = JSON.parse(sessionStorage.getItem('cb_req'));
+  // rebuild preview UI so the page isn't blank, then reveal
+  $('#card-scenario').classList.add('hidden');
+  await revealFull(req, sessionId);
+  history.replaceState({}, '', '/');
+}
+
+async function revealFull(req, token){
+  const r = await fetch('/api/full',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({...req, token})});
+  if (r.status === 402){ msg($('#full-msg'),'Payment not confirmed yet.','err');
+    $('#card-full').classList.remove('hidden'); return; }
+  const d = await r.json();
+  $('#card-preview').classList.add('hidden');
+  $('#full-text').textContent = d.body;
+  msg($('#full-msg'), "🎉 Nice — this one's yours. Personalise anything in [brackets], then send it with confidence.", 'ok');
+  $('#card-full').classList.remove('hidden');
+  $('#card-full').scrollIntoView({behavior:'smooth', block:'start'});
+  track('letter_unlocked');
+  celebrate();
+  window._letter = d.body; window._subject = d.subject;
+}
+
+// A personal, shareable "win card" — Spotify-Wrapped style: it's about THEIR
+// case (their amount, who owes them, the exact law), not a generic milestone.
+// This is the organic-growth surface (see GROWTH.md).
+const LAW_LABEL = {za:'Consumer Protection Act', uk:'Consumer Rights Act',
+                   eu:'EU consumer law', us:'US consumer law'};
+
+function fitText(ctx, text, max){
+  let t = text || '';
+  if (ctx.measureText(t).width <= max) return t;
+  while (t.length > 1 && ctx.measureText(t + '…').width > max) t = t.slice(0, -1);
+  return t + '…';
+}
+
+function makeShareCard(){
+  const req = JSON.parse(sessionStorage.getItem('cb_req') || '{}');
+  const W = 1080, H = 1350, c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const x = c.getContext('2d');
+  // Document paper + a red "official notice" frame — the share card IS a demand.
+  x.fillStyle = '#efe8d6'; x.fillRect(0, 0, W, H);
+  x.strokeStyle = '#c2362b'; x.lineWidth = 9;
+  x.strokeRect(44, 44, W - 88, H - 88);
+  const M = 100;
+  x.textBaseline = 'alphabetic';
+  x.fillStyle = '#c2362b'; x.font = '700 30px ui-monospace, Menlo, monospace';
+  x.fillText('N O T I C E   O F   D E M A N D', M, 180);
+  x.fillStyle = '#16233b'; x.font = '800 66px -apple-system,Segoe UI,Arial';
+  x.fillText("I'm done asking.", M, 320);
+  x.fillText("I'm demanding it.", M, 398);
+  if (req.amount){                                                     // the personal hook
+    x.fillStyle = '#c2362b'; x.font = '800 150px -apple-system,Segoe UI,Arial';
+    x.fillText(fitText(x, req.amount, W - M*2), M, 630);
+  }
+  x.fillStyle = '#4a5260'; x.font = '600 42px -apple-system,Segoe UI,Arial';
+  if (req.company) x.fillText('from ' + fitText(x, req.company, W - M*2 - 130), M, 720);
+  x.fillText('backed by the ' + (LAW_LABEL[req.region] || 'consumer law'), M, 784);
+  x.fillStyle = '#6c7280'; x.font = '500 38px -apple-system,Segoe UI,Arial';
+  x.fillText('A firm demand letter, in 60 seconds.', M, 1180);
+  x.fillStyle = '#c2362b'; x.font = '800 46px -apple-system,Segoe UI,Arial';
+  x.fillText('⟲ Clawback', M, 1248);
+  return c;
+}
+
+function shareWin(where){
+  track('share_clicked', {scenario: where});
+  makeShareCard().toBlob(async (blob) => {
+    const file = new File([blob], 'clawback-win.png', {type:'image/png'});
+    const caption = 'Stopped asking, started demanding — with the actual law cited. Made with Clawback.';
+    if (navigator.canShare && navigator.canShare({files:[file]})){
+      try { await navigator.share({files:[file], text:caption}); return; } catch(e){}
+    }
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = 'clawback-win.png'; a.click();
+  }, 'image/png');
+}
+$('#share-preview-btn').onclick = () => shareWin('preview');
+$('#share-done-btn').onclick = () => shareWin('completed');
+
+// Peak-end rule: re-surface the share ask at the ENDING moment — right after
+// the user copies or downloads the letter (job done = a clean mini-win).
+function revealDone(){ $('#done-nudge').classList.remove('hidden'); }
+
+// The actual job: send it. One tap opens the user's email pre-filled with the
+// subject and the full letter — they just add the recipient and hit send.
+$('#email-btn').onclick = () => {
+  const subj = encodeURIComponent(window._subject || 'Formal demand');
+  const body = encodeURIComponent(window._letter || '');
+  window.location.href = `mailto:?subject=${subj}&body=${body}`;
+  revealDone();
+};
+
+$('#copy-btn').onclick = async () => {
+  await navigator.clipboard.writeText(window._letter||'');
+  $('#copy-btn').textContent = 'Copied ✓'; setTimeout(()=>$('#copy-btn').textContent='Copy text',1500);
+  revealDone();
+};
+$('#print-btn').onclick = () => window.print();
+$('#download-btn').onclick = () => {
+  const blob = new Blob([window._letter||''], {type:'text/plain'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'demand-letter.txt'; a.click();
+  revealDone();
+};
+$('#restart-btn').onclick = () => location.href = '/';
+
+boot();
+</script>
+</body>
+</html>
